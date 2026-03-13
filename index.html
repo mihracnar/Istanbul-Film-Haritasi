@@ -491,17 +491,17 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 <!-- SELECTOR -->
 <div id="sel">
   <div class="lbl">İBB Sinema Ofisi — Tasarım</div>
-  <button class="tab on"  onclick="show('A')"><div class="ti">Konsept A</div><div class="tn">Sinematik Noir</div><div class="ts">Koyu · Altın · Arşiv</div></button>
+  <button class="tab on"  onclick="show('E')"><div class="ti">Konsept E</div><div class="tn">İsviçre Minimal</div><div class="ts">Beyaz · Siyah · Teko</div></button>
   <button class="tab"     onclick="show('B')"><div class="ti">Konsept B</div><div class="tn">Editorial</div><div class="ts">Beyaz · Kırmızı · Gazete</div></button>
+  <button class="tab"     onclick="show('A')"><div class="ti">Konsept A</div><div class="tn">Sinematik Noir</div><div class="ts">Koyu · Altın · Arşiv</div></button>
   <button class="tab"     onclick="show('D')"><div class="ti">Konsept D</div><div class="tn">Osmanlı Klasik</div><div class="ts">Krem · Altın · Tezhip</div></button>
-  <button class="tab"     onclick="show('E')"><div class="ti">Konsept E</div><div class="tn">İsviçre Minimal</div><div class="ts">Beyaz · Siyah · Teko</div></button>
   <div style="margin-left:auto;font-size:7px;color:#1e1e1e;letter-spacing:2px">← →</div>
 </div>
 
 <div id="preview" data-theme="A">
 
 <!-- ════ KONSEPT A ════ -->
-<div id="cA" class="concept on">
+<div id="cA" class="concept">
   <div class="top">
     <div class="logo">
       <div class="logo-box">▶</div>
@@ -588,7 +588,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 </div>
 
 <!-- ════ KONSEPT E ════ -->
-<div id="cE" class="concept">
+<div id="cE" class="concept on">
   <div class="top">
     <div class="sw-t">SİNEMA</div>
     <div class="sw-d"></div>
@@ -1509,7 +1509,7 @@ function updateConnPositions(theme, animate){
 function liveUpdateConn(theme){
   if(activeConns[theme]) updateConnPositions(theme, false);
 }
-const KEYS = ['A','B','D','E'];
+const KEYS = ['E','B','A','D'];
 let cur = 0;
 
 function show(id){
@@ -1552,9 +1552,9 @@ buildE();
 
 // init first map after layout
 setTimeout(()=>{
-  inited.A = true;
-  createMap('mapA','A');
-  aSelectLoc(1);
+  inited.E = true;
+  createMap('mapE','E');
+  document.getElementById('preview').dataset.theme = 'E';
 }, 80);
 
 // redraw connection lines on window resize
