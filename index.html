@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İstanbul Film Mekanları Haritası</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23f03010'/></svg>">
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Teko:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- App CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<!-- SELECTOR kaldırıldı — tek konsept: İsviçre Minimal -->
+
+<div id="preview" data-theme="E">
+
+<!-- ════ KONSEPT A ════ -->
+<div id="cA" class="concept">
+  <div class="top">
+    <div class="logo">
+      <div class="logo-box">▶</div>
+      <div><div class="logo-sup">İstanbul</div><div class="logo-main">Sinema Haritası</div></div>
+    </div>
+    <div class="nav">
+      <button class="on">Harita</button><button>Filmler</button><button>Mekanlar</button><button>Arşiv</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-n">12</div><div class="stat-l">Mekan</div></div>
+      <div class="stat"><div class="stat-n">18</div><div class="stat-l">Film</div></div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="sb" id="aLocScroll"><div class="sb-h">Mekanlar <span id="aLocCount"></span></div><div id="aLocs"></div></div>
+    <div class="map-wrap">
+      <div class="lmap" id="mapA"></div>
+      <div class="info-panel" id="aIP" style="display:none;flex-direction:column"></div>
+      <div class="strip"><span>İstanbul Sinema Coğrafyası Atlası · İBB Sinema Ofisi</span></div>
+    </div>
+    <div class="flp" id="aFilmScroll"><div class="flp-h">Filmler</div><div id="aFilms"></div></div>
+  </div>
+</div>
+
+<!-- ════ KONSEPT B ════ -->
+<div id="cB" class="concept">
+  <div class="top">
+    <div class="top-l">
+      <div class="badge">İBB</div>
+      <div><div class="t-title">Sinema Ofisi</div><div class="t-sub">Çekim Mekanları Haritası</div></div>
+    </div>
+    <div class="t-nav">
+      <button class="on">Harita</button><button>Film Dizini</button><button>Mekan Rehberi</button><button>Dönemler</button>
+    </div>
+    <div class="t-right">
+      <div class="t-counts"><span id="bLocCount"></span> mekan &nbsp;·&nbsp; <span id="bFilmCount"></span> film</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="sbox"><span>⌕</span><input placeholder="Film, yönetmen veya mekan ara…" readonly></div>
+    <button class="chip on" onclick="bChip(this)">Tümü</button>
+    <button class="chip" onclick="bChip(this)">Drama</button>
+    <button class="chip" onclick="bChip(this)">Tarih</button>
+    <button class="chip" onclick="bChip(this)">Gerilim</button>
+    <button class="chip" onclick="bChip(this)">Komedi</button>
+  </div>
+  <div class="body">
+    <div class="map-wrap"><div class="lmap" id="mapB"></div>
+      <div id="bLocBar" class="b-loc-bar" style="display:none"></div>
+    </div>
+    <div class="r-panel">
+      <div class="rp-tabs">
+        <button class="rp-tab on" onclick="bTab('films',this)">Filmler</button>
+        <button class="rp-tab"    onclick="bTab('locs',this)">Mekanlar</button>
+      </div>
+      <div class="rp-scroll" id="bScroll"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ KONSEPT D ════ -->
+<div id="cD" class="concept">
+  <div class="top">
+    <div class="top-inner">
+      <div class="o-orn">❖</div>
+      <div><div class="o-ibb">İstanbul Büyükşehir Belediyesi</div><div class="o-ttl">Sinema Coğrafyası</div></div>
+      <div class="o-nav">
+        <button class="on">Harita</button><button>Filmler</button><button>Mekanlar</button><button>Arşiv</button>
+      </div>
+      <div class="o-right">
+        <div class="o-counts" id="dCounts"></div>
+        <div class="o-search">⌕&nbsp;<span>Ara…</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="sb" id="dLocScroll"><div class="sb-h">Mekanlar <span id="dLocCount"></span></div><div id="dLocs"></div></div>
+    <div class="map-wrap">
+      <div class="lmap" id="mapD"></div>
+      <div class="ip-bar" id="dIP" style="display:none;flex-direction:column"></div>
+    </div>
+    <div class="fl-panel" id="dFilmScroll"><div class="flp-h">Filmler</div><div id="dFilms"></div></div>
+  </div>
+</div>
+
+<!-- ════ KONSEPT E ════ -->
+<div id="cE" class="concept on">
+  <div class="top">
+    <a href="https://sinemaofisitest.ibb.istanbul/" target="_blank" style="display:flex;align-items:center;flex-shrink:0;text-decoration:none;margin-right:4px">
+      <img id="eLogoImg" src="assets/images/logo.png" alt="İBB Sinema Ofisi" style="height:43px;width:auto;display:block">
+    </a>
+    <div class="sw-d"></div>
+    <div class="sw-s">İstanbul Film Mekanları Haritası</div>
+    <div class="e-counts" id="eCountsEl">— film<br>— mekan</div>
+    <div class="e-theme-toggle">
+      <button id="eBtnSade" class="active" onclick="eSetTheme('sade')">☀</button>
+      <button id="eBtnRenkli" onclick="eSetTheme('renkli')">☾</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="e-sb">
+      <div class="e-sb-h">MEKANLAR</div>
+      <div class="e-loc-cat-chips" id="eLocCatChips"></div>
+      <div id="eLocs"></div>
+    </div>
+    <div class="map-wrap">
+      <div class="lmap" id="mapE"></div>
+      <div id="eLocBar" class="e-loc-bar" style="display:none"></div>
+      <!-- Unified search overlay -->
+      <div class="e-search-wrap" id="eSearchWrap">
+        <div class="e-search-box">
+          <span class="e-search-icon">⌕</span>
+          <input id="eSearchInput" class="e-search-input"
+            placeholder="Film, mekan veya yönetmen ara…"
+            autocomplete="off"
+            oninput="eSearchType(this.value)"
+            onfocus="eSearchType(this.value)"
+            onkeydown="eSearchKey(event)">
+          <button class="e-search-clear" id="eSearchClear" onclick="eSearchClear()">×</button>
+        </div>
+        <div class="e-search-drop" id="eSearchDrop"></div>
+      </div>
+    </div>
+    <div class="e-fp">
+      <div class="e-fp-head">FİLMLER</div>
+      <div class="e-dir-badge" id="eDirBadge" style="display:none">
+        <span class="e-dir-badge-lbl" id="eDirBadgeLbl"></span>
+        <button class="e-dir-badge-x" onclick="eSearchClear()">×</button>
+      </div>
+      <div class="e-genre-chips-inner" id="eGenreChips">
+        <button class="e-genre-chip-inner on" onclick="eSetGenre('',this)">TÜMÜ</button>
+      </div>
+      <div class="e-decade-chips" id="eDecadeChips">
+        <span class="e-decade-lbl">DÖNEM</span>
+      </div>
+      <div id="eFilms"></div>
+    </div>
+  </div>
+</div>
+<!-- ════ MEDIA PANEL ════ -->
+<div id="mp">
+  <div class="mp-top">
+    <div class="mp-top-left">
+      <div class="mp-title" id="mpTitle">Film Adı</div>
+      <div class="mp-meta" id="mpMeta"></div>
+    </div>
+    <button class="mp-close" onclick="closeMedia()">✕</button>
+  </div>
+  <div class="mp-scroll">
+    <div>
+      <div class="mp-sec-label" id="mpHeroLabel">Sahne</div>
+      <div class="mp-hero-wrap" onclick="mpOpenLightbox()" style="cursor:default">
+        <img class="mp-hero" id="mpHero" src="" alt="">
+        <div class="mp-hero-play"><button class="mp-play" onclick="event.stopPropagation();mpPlayClick()">▶</button></div>
+        <div class="mp-hero-zoom">⤢</div>
+      </div>
+    </div>
+    <div>
+      <div class="mp-sec-label">Diğer Sahneler</div>
+      <div class="mp-thumbs" id="mpThumbs"></div>
+    </div>
+    <hr class="mp-divider">
+    <div class="mp-desc" id="mpDesc"></div>
+    <div>
+      <div class="mp-sec-label">Çekim Mekanları</div>
+      <div class="mp-locs" id="mpLocs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SVG BAĞLANTI ÇİZGİLERİ KATMANI -->
+<svg id="conn-svg" style="
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:900;overflow:visible
+"></svg>
+
+</div><!-- /preview -->
+
+<div id="infobar">
+  <div id="desc">İstanbul Sinema Coğrafyası · Çekim Mekan Atlası · İBB Sinema Ofisi</div>
+  <div class="h">mekan → galeri &nbsp;|&nbsp; film → detay &nbsp;|&nbsp; Esc kapat</div>
+</div>
+
+<!-- GALLERY LIGHTBOX -->
+<div id="gLightbox" onclick="gLbClose(event)">
+  <button class="gl-close" onclick="closeGLb()">×</button>
+  <button class="gl-nav gl-prev" onclick="event.stopPropagation();gLbNav(-1)">‹</button>
+  <img id="gLbImg" src="" alt="">
+  <div><div class="gl-film" id="gLbFilm"></div><div class="gl-caption" id="gLbCaption"></div></div>
+  <button class="gl-nav gl-next" onclick="event.stopPropagation();gLbNav(1)">›</button>
+</div>
+
+<!-- App JS -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/tmdb.js"></script>
+  <script src="assets/js/map.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/init.js"></script>
+</body>
+</html>
