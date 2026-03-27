@@ -107,39 +107,48 @@ function eApplyFilters(){
   });
 }
 
-function ePinsResetAll(){
+function ePinsResetAll(dimOthers){
+  // dimOthers: Set of locId's that are highlighted — others get dimmed
   LOCS.forEach(l=>{
     const p = document.getElementById('pin-E-'+l.id);
     if(!p) return;
     const label = p.querySelector('.pin-label');
     const stem  = p.querySelector('.pin-stem');
+    const wrap  = p.closest('.leaflet-marker-icon');
     if(label){ label.style.background='#000'; label.style.color='#fff'; }
     if(stem)   stem.style.background='#000';
+    if(wrap){
+      wrap.style.zIndex = '';
+      // Dim if others are highlighted
+      wrap.style.opacity = '1';
+    }
+    const mk = markers['E']?.[l.id];
+    if(mk) mk.setZIndexOffset(0);
   });
 }
 
 function ePinHighlight(locId, on, _retry){
   const pinEl = document.getElementById('pin-E-'+locId);
   if(!pinEl){
-    if(!_retry) setTimeout(()=>ePinHighlight(locId, on, true), 80);
+    // Leaflet henüz DOM'a yazmamış — daha uzun süre bekle
+    if(!_retry) setTimeout(()=>ePinHighlight(locId, on, true), 150);
     return;
   }
   const label = pinEl.querySelector('.pin-label');
   const stem  = pinEl.querySelector('.pin-stem');
+  const wrap  = pinEl.closest('.leaflet-marker-icon');
   if(on){
     if(label){ label.style.background='#f03010'; label.style.color='#fff'; }
     if(stem)   stem.style.background='#f03010';
+    if(wrap){ wrap.style.zIndex = 9000; wrap.style.opacity = '1'; }
     const mk = markers['E']?.[locId];
     if(mk) mk.setZIndexOffset(1000);
-    const wrapEl = pinEl.closest('.leaflet-marker-icon');
-    if(wrapEl) wrapEl.style.zIndex = 9000;
   } else {
     if(label){ label.style.background='#000'; label.style.color='#fff'; }
     if(stem)   stem.style.background='#000';
+    if(wrap){ wrap.style.zIndex = ''; wrap.style.opacity = '1'; }
     const mk = markers['E']?.[locId];
     if(mk) mk.setZIndexOffset(0);
-    const wrapEl = pinEl.closest('.leaflet-marker-icon');
-    if(wrapEl) wrapEl.style.zIndex = '';
   }
 }
 
@@ -173,7 +182,7 @@ async function eSelectLoc(id){
   const first = document.getElementById('eFilm'+loc.films[0]);
   if(first) first.scrollIntoView({block:'nearest'});
 
-  ePinsResetAll();
+  ePinsResetAll(new Set([id]));
   eActiveLoc = id;
   ePinHighlight(id, true);
 

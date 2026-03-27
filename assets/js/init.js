@@ -3,8 +3,12 @@ function attachMapRedraw(theme, m){
   m.on('move zoom', ()=>{
     liveUpdateConn(theme);
     clearTimeout(redrawTimer);
-    redrawTimer = setTimeout(()=> liveUpdateConn(theme), 80);
+    redrawTimer = setTimeout(()=>{
+      liveUpdateConn(theme);
+      if(theme === 'E') eUpdateLabelVisibility();
+    }, 150);
   });
+  if(theme === 'E') setTimeout(eUpdateLabelVisibility, 400);
 }
 
 function eShowLoading(msg) {

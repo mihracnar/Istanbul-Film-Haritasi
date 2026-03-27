@@ -244,12 +244,14 @@ function highlightFilmOnMap(theme, filmId){
   const locs = LOCS.filter(l=>f.locs.includes(l.id));
   const accentColor = {A:'#c8a252', B:'#d42b1e', D:'#c47c1e', E:'#f03010'}[theme];
 
-  // For E: reset all pins once before highlighting multiple
-  if(theme === 'E') ePinsResetAll();
+  // For E: reset all pins, dim non-highlighted ones
+  if(theme === 'E'){
+    const highlightedIds = new Set(locs.map(l=>l.id));
+    ePinsResetAll(highlightedIds);
+  }
 
   locs.forEach(loc=>{
     if(theme === 'E'){
-      // E: highlight via ePinHighlight (ePinsResetAll called once before loop)
       ePinHighlight(loc.id, true);
       hlLayers[theme].push({ _restore: ()=> ePinHighlight(loc.id, false) });
     } else if(theme === 'B'){
@@ -403,7 +405,7 @@ function createMap(id, theme){
   m.on('dblclick', function(e) {
     // Pin, film ve seçimleri sıfırla
     if(document.getElementById('mp').classList.contains('open')) closeMedia();
-    ePinsResetAll();
+    ePinsResetAll(null);
     // Decade accordion'u sıfırla — ilk dönemi aç
     eOpenDecades.clear();
     const firstGrp = document.querySelector('.e-decade-group');
@@ -1029,4 +1031,65 @@ function updateConnPositions(theme, animate){
 // Tüm scroll ve move eventlerinde çağrılır — sadece koordinat günceller
 function liveUpdateConn(theme){
   if(activeConns[theme]) updateConnPositions(theme, false);
+}
+
+/* ── LABEL COLLISION DETECTION ── */
+function eUpdateLabelVisibility(){
+  const m = maps['E'];
+  if(!m) return;
+
+  const items = [];
+  LOCS.forEach(loc => {
+    const mk = markers['E']?.[loc.id];
+    if(!mk) return;
+    const el = mk.getElement();
+    const pinDiv = el?.querySelector('[id^="pin-E-"]');
+    if(!pinDiv) return;
+    const pt = m.latLngToContainerPoint([loc.lat, loc.lng]);
+    items.push({ loc, pt, pinDiv });
+  });
+
+  // Önce hepsini sıfırla
+  items.forEach(({ pinDiv }) => {
+    const label = pinDiv.querySelector('.pin-label');
+    const stem  = pinDiv.querySelector('.pin-stem');
+    if(label) label.style.display = '';
+    if(stem){ stem.style.display=''; stem.style.height=''; stem.style.width=''; stem.style.borderRadius=''; stem.style.margin=''; }
+  });
+
+  // Film sayısına göre azalan sıra — en önemlisi önce
+  const sorted = [...items].sort((a,b) => b.loc.films.length - a.loc.films.length);
+  const placed = [];
+
+  sorted.forEach(({ loc, pt, pinDiv }) => {
+    const label = pinDiv.querySelector('.pin-label');
+    const stem  = pinDiv.querySelector('.pin-stem');
+    if(!label) return;
+
+    // Seçili (kırmızı) pin her zaman görünür
+    const bg = label.style.background;
+    const isSelected = bg === 'rgb(240, 48, 16)' || bg === '#f03010';
+    if(isSelected){
+      placed.push({ x1: pt.x - 30, y1: pt.y - 18, x2: pt.x + 80, y2: pt.y + 4 });
+      return;
+    }
+
+    const w = loc.name.length * 5.5 + 22;
+    const h = 14;
+    const x1 = pt.x - 2, y1 = pt.y - h - 8;
+    const x2 = x1 + w,   y2 = y1 + h;
+
+    const overlaps = placed.some(r =>
+      x1 < r.x2 + 4 && x2 > r.x1 - 4 && y1 < r.y2 + 4 && y2 > r.y1 - 4
+    );
+
+    if(overlaps){
+      // Label gizle, sadece küçük nokta kalsın
+      label.style.display = 'none';
+      if(stem){ stem.style.display = ''; stem.style.height = '4px'; stem.style.width = '4px'; stem.style.borderRadius = '50%'; stem.style.margin = '0 auto'; }
+    } else {
+      if(stem){ stem.style.height = ''; stem.style.width = ''; stem.style.borderRadius = ''; stem.style.margin = ''; }
+      placed.push({ x1, y1, x2, y2 });
+    }
+  });
 }
