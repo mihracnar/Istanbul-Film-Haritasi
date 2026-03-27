@@ -138,6 +138,7 @@ async function main() {
     } else {
       failed++;
       console.log('❌ bulunamadı');
+      fs.appendFileSync(OUT_FILE.replace('.json', '-failed.txt'), `${film.id}|${film.title}|${film.year}|${film.dir}\n`);
     }
     // Her 10 filmde bir kaydet
     if ((done + failed) % 10 === 0) {
