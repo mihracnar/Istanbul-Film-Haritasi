@@ -4,3 +4,11 @@ const GID_MEKANLAR = "314226555";
 
 let FILMS = [];
 let LOCS  = [];
+// O(1) lookup maps — data.js'deki loadSheetsData() sonrası doldurulur
+let FILM_MAP = {}; // id → film
+let LOC_MAP  = {}; // id → loc
+
+function buildLookupMaps(){
+  FILM_MAP = Object.fromEntries(FILMS.map(f => [f.id, f]));
+  LOC_MAP  = Object.fromEntries(LOCS.map(l  => [l.id, l]));
+}

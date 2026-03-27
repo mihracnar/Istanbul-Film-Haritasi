@@ -467,9 +467,6 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 #eLocs{overflow-y:auto;flex:1}
 
 /* Mekan kategori filtresi */
-#cE .e-loc-cat-chips{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px;border-bottom:2px solid #000;flex-shrink:0;padding:6px 10px;align-content:flex-start;overflow:hidden}
-#cE .e-loc-cat-chip{padding:3px 7px;font-size:9px;font-family:'DM Mono',monospace;background:transparent;border:1px solid #ddd;color:#aaa;cursor:pointer;letter-spacing:.3px;transition:all .1s}
-#cE .e-loc-cat-chip:hover{border-color:#000;color:#000}
 #cE .e-loc-cat-chip.on{background:#000;border-color:#000;color:#fff;font-weight:700}
 #cE .e-loc-cat-chip.empty{color:#ddd;border-color:#eee;cursor:default}
 #cE .e-loc-cat-chip.empty:hover{color:#ddd;border-color:#eee;background:transparent}
@@ -477,17 +474,10 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 /* Sağ filmler sidebar */
 #cE .e-fp{width:25%;min-width:200px;border-left:2px solid #000;background:#fff;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 #cE .e-fp-head{font-size:11px;letter-spacing:3px;color:#000;font-weight:700;padding:10px 14px 8px;border-bottom:2px solid #000;flex-shrink:0;font-family:'DM Mono',monospace}
-#cE .e-genre-chips-inner{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid #f0f0f0;flex-shrink:0}
-#cE .e-genre-chip-inner{flex:1 1 auto;padding:6px 0;background:transparent;border:none;font-size:9px;font-family:'DM Mono',monospace;font-weight:400;color:#bbb;cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;padding:6px 6px}
-#cE .e-genre-chip-inner:hover{color:#555}
 #cE .e-genre-chip-inner.on{color:#f03010;border-bottom-color:#f03010;font-weight:700}
 
 /* Dönem chips — badge style, farklı görsel dil */
-#cE .e-decade-chips{display:flex;align-items:center;gap:5px;padding:7px 14px;border-bottom:2px solid #000;flex-shrink:0;flex-wrap:wrap}
 #cE .e-decade-lbl{font-size:9px;letter-spacing:2px;color:#ccc;font-family:'DM Mono',monospace;margin-right:2px;flex-shrink:0}
-#cE .e-decade-chip{padding:2px 7px;font-size:9px;font-family:'DM Mono',monospace;font-weight:600;background:transparent;border:1px solid #ddd;color:#aaa;cursor:pointer;letter-spacing:.3px;transition:all .12s}
-#cE .e-decade-chip:hover{border-color:#000;color:#000}
-#cE .e-decade-chip.on{background:#000;border-color:#000;color:#fff}
 #eFilms{overflow-y:auto;flex:1}
 #cE .e-film-row{padding:9px 14px;border-bottom:1px solid #f0f0f0;cursor:pointer;border-left:2px solid transparent;transition:all .1s}
 #cE .e-film-row:hover{background:#f9f9f9}
@@ -558,9 +548,6 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 
 #cE.renkli .e-sb{background:#222;border-right:2px solid #383838}
 #cE.renkli .e-sb-h{background:#1c1c1c;color:#F7F7F7;border-bottom:1px solid #222;letter-spacing:4px}
-#cE.renkli .e-loc-cat-chips{background:#1c1c1c;border-bottom:1px solid #383838}
-#cE.renkli .e-loc-cat-chip{color:#888;border-color:#484848}
-#cE.renkli .e-loc-cat-chip:hover{border-color:#F7F7F7;color:#F7F7F7}
 #cE.renkli .e-loc-cat-chip.on{background:#F7F7F7;border-color:#F7F7F7;color:#0f0f0f}
 #cE.renkli .e-loc-cat-chip.empty{color:#333;border-color:#1a1a1a}
 #cE.renkli .e-loc-row{border-bottom:1px solid #333}
@@ -572,15 +559,8 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 
 #cE.renkli .e-fp{background:#222;border-left:2px solid #383838}
 #cE.renkli .e-fp-head{background:#1c1c1c;color:#F7F7F7;border-bottom:1px solid #222;letter-spacing:4px}
-#cE.renkli .e-genre-chips-inner{border-bottom:1px solid #1a1a1a}
-#cE.renkli .e-genre-chip-inner{color:#888}
-#cE.renkli .e-genre-chip-inner:hover{color:#F7F7F7}
 #cE.renkli .e-genre-chip-inner.on{color:#f03010;border-bottom-color:#f03010}
-#cE.renkli .e-decade-chips{border-bottom:1px solid #383838;background:#1c1c1c}
 #cE.renkli .e-decade-lbl{color:#888}
-#cE.renkli .e-decade-chip{color:#888;border-color:#484848}
-#cE.renkli .e-decade-chip:hover{border-color:#F7F7F7;color:#F7F7F7}
-#cE.renkli .e-decade-chip.on{background:#F7F7F7;border-color:#F7F7F7;color:#0f0f0f}
 #cE.renkli .e-film-row{border-bottom:1px solid #333}
 #cE.renkli .e-film-row:hover{background:#2a2a2a}
 #cE.renkli .e-film-row.on{background:#2a2a2a;border-left-color:#f03010}
@@ -674,3 +654,126 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 #cE.renkli .e-film-row.flash {
   animation: filmFlash 0.7s ease-out forwards;
 }
+
+/* ── GALLERY SKELETON ── */
+.loc-gallery-skeleton{
+  flex-shrink:0;width:180px;height:105px;border-radius:1px;
+  background:linear-gradient(90deg,#e8e8e8 25%,#f2f2f2 50%,#e8e8e8 75%);
+  background-size:400% 100%;
+  animation:skeletonShimmer 1.4s ease infinite;
+}
+#cE.renkli .loc-gallery-skeleton{
+  background:linear-gradient(90deg,#2a2a2a 25%,#333 50%,#2a2a2a 75%);
+  background-size:400% 100%;
+}
+@keyframes skeletonShimmer{
+  0%{background-position:100% 0}
+  100%{background-position:-100% 0}
+}
+
+/* ── DECADE CHIPS ── */
+
+/* ══════════════════════════════════════════════
+   UNIFIED CHIP SYSTEM — mekan türü · decade · tür
+   Aynı boyut, aynı border dili, aynı aktif renk
+══════════════════════════════════════════════ */
+
+/* ── Shared chip token ─────────────────────── */
+#cE .e-loc-cat-chip,
+#cE .e-genre-chip-inner {
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:4px 9px;
+  font-size:9px;font-family:'DM Mono',monospace;font-weight:400;
+  letter-spacing:.5px;
+  background:transparent;
+  border:1px solid #ddd;
+  color:#aaa;
+  cursor:pointer;
+  white-space:nowrap;
+  border-radius:0;
+  transition:color .12s, border-color .12s, background .12s;
+}
+#cE .e-loc-cat-chip:hover,
+#cE .e-genre-chip-inner:hover {
+  color:#111;border-color:#111;
+}
+#cE .e-loc-cat-chip.on,
+#cE .e-genre-chip-inner.on {
+  background:#000;border-color:#000;color:#fff;font-weight:700;
+}
+
+/* ── Loc-cat container (sol panel) ─────────── */
+#cE .e-loc-cat-chips {
+  display:flex;flex-wrap:wrap;gap:4px;
+  padding:8px 10px;
+  border-bottom:2px solid #444;
+  flex-shrink:0;
+  align-content:flex-start;
+}
+#cE .e-loc-cat-chip.empty {
+  color:#e0e0e0;border-color:#eee;cursor:default;pointer-events:none;
+}
+
+
+/* ── Genre container (sağ panel) ────────────── */
+#cE .e-genre-chips-inner {
+  display:flex;flex-wrap:wrap;gap:4px;
+  padding:4px 10px 8px;
+  border-bottom:2px solid #444;
+  flex-shrink:0;
+}
+#cE .e-genre-chip-inner {
+  flex:unset; /* override old flex:1 */
+}
+
+/* ── Dark mode ──────────────────────────────── */
+#cE.renkli .e-loc-cat-chips {
+  background:#1c1c1c;border-bottom:2px solid #555;
+}
+  background:#222;
+}
+#cE.renkli .e-genre-chips-inner {
+  background:#222;border-bottom:2px solid #555;
+}
+#cE.renkli .e-loc-cat-chip,
+#cE.renkli .e-genre-chip-inner {
+  color:#666;border-color:#3a3a3a;
+}
+#cE.renkli .e-loc-cat-chip:hover,
+#cE.renkli .e-genre-chip-inner:hover {
+  color:#f0f0f0;border-color:#888;
+}
+#cE.renkli .e-loc-cat-chip.on,
+#cE.renkli .e-genre-chip-inner.on {
+  background:#f0f0f0;border-color:#f0f0f0;color:#111;
+}
+#cE.renkli .e-loc-cat-chip.empty {
+  color:#2a2a2a;border-color:#222;
+}
+
+/* ── DECADE BAR — accordion listesinin üstünde, chip'lerden farklı dil ── */
+#cE .e-decade-bar {
+  display:flex;flex-wrap:wrap;
+  border-bottom:none;
+  flex-shrink:0;
+  background:#f8f8f8;
+}
+#cE .e-decade-seg {
+  flex:1 1 auto;
+  padding:6px 4px;
+  font-size:9px;font-family:'DM Mono',monospace;font-weight:400;
+  letter-spacing:.5px;text-align:center;
+  background:transparent;border:none;
+  color:#aaa;cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:color .12s, border-color .12s;
+  white-space:nowrap;
+}
+#cE .e-decade-seg:hover { color:#111; }
+#cE .e-decade-seg.on    { color:#000;font-weight:700; background:#efefef; }
+
+/* dark */
+#cE.renkli .e-decade-bar  { background:#1a1a1a;border-bottom:none; }
+#cE.renkli .e-decade-seg  { color:#555; }
+#cE.renkli .e-decade-seg:hover { color:#ddd; }
+#cE.renkli .e-decade-seg.on    { color:#f0f0f0;font-weight:700;background:#2a2a2a; }

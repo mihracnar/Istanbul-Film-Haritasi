@@ -11,9 +11,27 @@ function buildE(){
     chips.appendChild(btn);
   });
 
+  // Decade chips
+  const decades = [...new Set(FILMS.map(f=>Math.floor(f.year/10)*10))].sort((a,b)=>a-b);
+  const dcEl = document.getElementById('eDecadeChips');
+  decades.forEach(d=>{
+    const btn = document.createElement('button');
+    btn.className = 'e-decade-seg';
+    btn.textContent = d + "'";
+    btn.dataset.decade = d;
+    btn.onclick = ()=> eSetDecade(eActiveDecade===d ? 0 : d, btn);
+    dcEl.appendChild(btn);
+  });
+
   // Loc category chips
   const ALL_LOC_CATS = ['Plato','Stüdyo','Sokak','Simge Yapı','Otel','Okul','Diğer'];
   const lcEl = document.getElementById('eLocCatChips');
+  // TÜMÜ butonu
+  const allBtn = document.createElement('button');
+  allBtn.className = 'e-loc-cat-chip on';
+  allBtn.textContent = 'TÜMÜ';
+  allBtn.onclick = ()=> eSetLocCat('', allBtn);
+  lcEl.appendChild(allBtn);
   ALL_LOC_CATS.forEach(c=>{
     const btn = document.createElement('button');
     btn.className = 'e-loc-cat-chip';
@@ -45,6 +63,32 @@ function eSetGenre(g, btn){
   document.querySelectorAll('.e-genre-chip-inner').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   eApplyFilters();
+  eFilterMapMarkers();
+}
+
+function eSetDecade(d, btn){
+  eActiveDecade = d;
+  document.querySelectorAll('.e-decade-seg').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  eApplyFilters();
+  eFilterMapMarkers();
+
+  // Seçilen decade'in accordion'unu aç, diğerlerini kapat
+  eOpenDecades.clear();
+  if(d){
+    eOpenDecades.add(String(d));
+  } else {
+    // TÜMÜ: ilk group'u aç
+    const first = document.querySelector('.e-decade-group');
+    if(first) eOpenDecades.add(first.dataset.decade);
+  }
+  document.querySelectorAll('.e-decade-group').forEach(grp=>{
+    const isOpen = eOpenDecades.has(grp.dataset.decade);
+    const arr  = grp.querySelector('.e-decade-hdr-arr');
+    const body = grp.querySelector('.e-decade-body');
+    if(arr)  arr.className  = 'e-decade-hdr-arr'  + (isOpen ? ' open' : '');
+    if(body) body.className = 'e-decade-body' + (isOpen ? ' open' : ' closed');
+  });
 }
 
 /* Director autocomplete */
@@ -204,6 +248,9 @@ function eSearchClear(){
     eApplyFilters();
     eFilterMapMarkers();
   }
+  // Decade filtresini de temizle
+  eActiveDecade = 0;
+  document.querySelectorAll('.e-decade-seg').forEach(b=>b.classList.toggle('on', b.dataset.decade===undefined));
 }
 
 document.addEventListener('click', e=>{
@@ -211,14 +258,9 @@ document.addEventListener('click', e=>{
 });
 
 function eSetLocCat(c, btn){
-  if(eActiveLocCat === c){
-    eActiveLocCat = '';
-    btn.classList.remove('on');
-  } else {
-    eActiveLocCat = c;
-    document.querySelectorAll('.e-loc-cat-chip').forEach(b=>b.classList.remove('on'));
-    btn.classList.add('on');
-  }
+  eActiveLocCat = c;
+  document.querySelectorAll('.e-loc-cat-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
   eRenderLocs();
   eFilterMapMarkers();
 }

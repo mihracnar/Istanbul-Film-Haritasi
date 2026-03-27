@@ -12,7 +12,7 @@ let eActiveLoc  = null;
 function stillUrl(seed, w, h){ return `https://picsum.photos/seed/${seed}/${w}/${h}`; }
 
 async function openMedia(filmId){
-  const f = FILMS.find(x=>x.id===filmId);
+  const f = FILM_MAP[filmId];
   if(!f) return;
   currentFilm = f;
 
@@ -38,7 +38,10 @@ async function openMedia(filmId){
   ).join('');
   document.getElementById('mp').classList.add('open');
   const theme = document.getElementById('preview').dataset.theme;
-  if(theme==='E') document.querySelector('#cE .e-fp').style.visibility='hidden';
+  if(theme==='E'){
+    document.querySelector('#cE .e-fp').style.visibility='hidden';
+    eOpenDecadesForFilms([filmId]);
+  }
   const galleryBars = {A:'aIP', B:'bLocBar', D:'dIP', E:'eLocBar'};
   const gb = document.getElementById(galleryBars[theme]);
   if(gb) gb.style.display = 'none';
@@ -108,7 +111,7 @@ function mpSelectStillUrl(url, imgEl, idx){
 }
 
 function mpSelectStill(idx, filmId){
-  const f = FILMS.find(x=>x.id===filmId);
+  const f = FILM_MAP[filmId];
   document.getElementById('mpHero').src = stillUrl(f.stills[idx], 640, 360);
   document.querySelectorAll('.mp-thumb').forEach((el,i)=>el.classList.toggle('sel', i===idx));
 }
@@ -120,7 +123,7 @@ function mpPlayClick(){
 function mpGoLoc(locId){
   // keep media panel open — just pan map to the location
   const theme = document.getElementById('preview').dataset.theme;
-  const loc = LOCS.find(l=>l.id===locId);
+  const loc = LOC_MAP[locId];
   if(loc && maps[theme]) maps[theme].setView([loc.lat, loc.lng], 15, {animate:true});
 }
 
@@ -143,19 +146,31 @@ function closeMedia(){
 let gLbItems = [];  // { src, filmTitle, stillIdx }
 let gLbCur  = 0;
 
-async function buildLocGallery(locId, theme){
-  const loc = LOCS.find(l=>l.id===locId);
-  if(!loc) return '';
-
+function buildLocGallerySkeleton(loc, theme){
   const accentLabel = {A:'#c8a252',B:'#d42b1e',D:'#c47c1e',E:'#111'}[theme];
   const typeFont = theme==='E' ? "font-family:'DM Mono',monospace;font-size:8px;" : '';
+  const skeletons = loc.films.map(()=>
+    `<div class="loc-gallery-item loc-gallery-skeleton"></div>`
+  ).join('');
+  const headHTML = `
+    <span style="font-size:7px;color:${accentLabel};letter-spacing:2px;text-transform:uppercase;${typeFont}">${loc.cat||loc.type}</span>
+    <span style="font-size:${theme==='E'?'16':'15'}px;${theme==='D'?'font-style:italic;':''}">${loc.name}</span>
+    <span style="font-size:8px;color:#aaa;font-family:'DM Mono',monospace">${loc.ilce}</span>
+    <span class="loc-gallery-count" style="font-size:8px;color:${accentLabel};font-family:'DM Mono',monospace;margin-left:4px">…</span>
+    <button class="loc-gallery-close" onclick="closeGalleryBar('${theme}')">×</button>`;
+  return `<div class="loc-gallery-head">${headHTML}</div>
+    <div class="loc-gallery-scroll" id="locGalleryScroll-${theme}">${skeletons}</div>`;
+}
 
-  const films = loc.films.map(fid=>FILMS.find(f=>f.id===fid)).filter(Boolean);
+async function fillLocGallery(locId, theme){
+  const loc = LOC_MAP[locId];
+  if(!loc) return;
+  const scrollEl = document.getElementById('locGalleryScroll-'+theme);
+  if(!scrollEl) return;
 
-  // TMDB verilerini paralel çek
+  const films = loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean);
   const tmdbResults = await Promise.all(films.map(f => fetchTMDB(f)));
 
-  // gLbItems: lightbox için
   gLbItems = [];
   const itemsHTML = films.flatMap((f, fi) => {
     const tmdb = tmdbResults[fi];
@@ -172,15 +187,10 @@ async function buildLocGallery(locId, theme){
     });
   }).join('');
 
-  const headHTML = `
-    <span style="font-size:7px;color:${accentLabel};letter-spacing:2px;text-transform:uppercase;${typeFont}">${loc.cat||loc.type}</span>
-    <span style="font-size:${theme==='E'?'16':'15'}px;${theme==='D'?'font-style:italic;':''}">${loc.name}</span>
-    <span style="font-size:8px;color:#aaa;font-family:'DM Mono',monospace">${loc.ilce}</span>
-    <span style="font-size:8px;color:${accentLabel};font-family:'DM Mono',monospace;margin-left:4px">${gLbItems.length} görsel</span>
-    <button class="loc-gallery-close" onclick="closeGalleryBar('${theme}')">×</button>`;
-
-  return `<div class="loc-gallery-head">${headHTML}</div>
-    <div class="loc-gallery-scroll">${itemsHTML}</div>`;
+  scrollEl.innerHTML = itemsHTML;
+  const countEl = scrollEl.closest('.loc-gallery-bar, [id^="e"], [id^="a"], [id^="b"], [id^="d"]')
+    ?.querySelector('.loc-gallery-count');
+  if(countEl) countEl.textContent = gLbItems.length + ' görsel';
 }
 
 function closeGalleryBar(theme){
@@ -235,7 +245,7 @@ function selectLoc(theme, id){
 const hlLayers = {}; // theme → [L.circle | restore-obj]
 
 function highlightFilmOnMap(theme, filmId){
-  const f = FILMS.find(x=>x.id===filmId);
+  const f = FILM_MAP[filmId];
   const m = maps[theme];
   if(!f || !m) return;
   clearHighlights();
@@ -476,7 +486,7 @@ function buildA(){
   });
 }
 async function aSelectLoc(id){
-  const loc = LOCS.find(l=>l.id===id); if(!loc) return;
+  const loc = LOC_MAP[id]; if(!loc) return;
   // sidebar
   document.querySelectorAll('#cA .loc').forEach(el=>el.classList.remove('on'));
   const el = document.getElementById('aLoc'+id);
@@ -536,7 +546,7 @@ function bChip(btn){
   btn.classList.add('on');
 }
 async function bSelectLoc(id){
-  const loc = LOCS.find(l=>l.id===id); if(!loc) return;
+  const loc = LOC_MAP[id]; if(!loc) return;
   const filmsBtn = document.querySelector('#cB .rp-tab:nth-child(1)');
   if(bCurrentTab !== 'films'){ bTab('films', filmsBtn); }
   document.querySelectorAll('#cB .rp-film').forEach(el=>el.classList.remove('on'));
@@ -583,7 +593,7 @@ function buildD(){
   });
 }
 async function dSelectLoc(id){
-  const loc = LOCS.find(l=>l.id===id); if(!loc) return;
+  const loc = LOC_MAP[id]; if(!loc) return;
   document.querySelectorAll('#cD .o-loc').forEach(el=>el.classList.remove('on'));
   const el=document.getElementById('dLoc'+id);
   if(el){ el.classList.add('on'); el.scrollIntoView({block:'nearest'}); }
@@ -606,7 +616,7 @@ async function dSelectLoc(id){
 function dSelectFilm(id){
   document.querySelectorAll('#cD .o-fl').forEach(el=>el.classList.remove('on'));
   const el=document.getElementById('dFilm'+id); if(el) el.classList.add('on');
-  const f=FILMS.find(x=>x.id===id);
+  const f=FILM_MAP[id];
   if(f?.locs[0]) dSelectLoc(f.locs[0]);
 }
 
@@ -614,9 +624,10 @@ function dSelectFilm(id){
    KONSEPT E — sidebar + filtreler
 ══════════════════════════════════════════════ */
 
-let eActiveGenre = '';
-let eActiveDir   = '';
+let eActiveGenre  = '';
+let eActiveDir    = '';
 let eActiveLocCat = '';
+let eActiveDecade = 0;  // 0 = tümü, örn. 1990, 2000, 2010
 let eDirFocusIdx = -1;
 
 function eFilterMapMarkers(){
@@ -625,17 +636,20 @@ function eFilterMapMarkers(){
 
   const visibleLocs = [];
 
-  // Yönetmen filtresindeki mekanları hesapla
-  const dirLocIds = eActiveDir
-    ? new Set(FILMS.filter(f=>f.dir===eActiveDir).flatMap(f=>f.locs))
-    : null;
+  // Aktif filtrelere göre görünür loc id'lerini hesapla
+  const filteredFilms = FILMS.filter(f=>
+    (!eActiveGenre  || f.genre === eActiveGenre) &&
+    (!eActiveDir    || f.dir   === eActiveDir)   &&
+    (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade)
+  );
+  const filteredLocIds = new Set(filteredFilms.flatMap(f=>f.locs));
 
   LOCS.forEach(loc => {
     const mk = markers['E']?.[loc.id];
     if(!mk) return;
-    const catOk = !eActiveLocCat || loc.cat === eActiveLocCat;
-    const dirOk = !dirLocIds || dirLocIds.has(loc.id);
-    const visible = catOk && dirOk;
+    const catOk  = !eActiveLocCat || loc.cat === eActiveLocCat;
+    const filmOk = filteredLocIds.has(loc.id);
+    const visible = catOk && filmOk;
     const el = mk.getElement();
     if(!el) return;
     const pinDiv = el.querySelector('[id^="pin-"]');
@@ -651,7 +665,7 @@ function eFilterMapMarkers(){
   });
 
   // Görünen noktalara uç
-  const hasFilter = eActiveLocCat || eActiveDir;
+  const hasFilter = eActiveLocCat || eActiveDir || eActiveGenre || eActiveDecade;
   if(hasFilter && visibleLocs.length) {
     if(visibleLocs.length === 1) {
       m.flyTo([visibleLocs[0].lat, visibleLocs[0].lng], 14, { duration: 0.8 });
@@ -706,7 +720,7 @@ function buildConnLine(theme, locId){
   while(svg.firstChild) svg.removeChild(svg.firstChild);
   activeConns[theme] = null;
 
-  const loc = LOCS.find(l=>l.id===locId);
+  const loc = LOC_MAP[locId];
   const m = maps[theme];
   if(!loc || !m) return;
 
@@ -813,7 +827,7 @@ function buildConnLineFilm(theme, filmId){
   while(svg.firstChild) svg.removeChild(svg.firstChild);
   activeConns[theme] = null;
 
-  const f = FILMS.find(x=>x.id===filmId);
+  const f = FILM_MAP[filmId];
   const m = maps[theme];
   if(!f || !m) return;
 
@@ -922,7 +936,7 @@ function updateConnPositions(theme, animate){
     conn.srcOuter.setAttribute('cx', sx); conn.srcOuter.setAttribute('cy', sy);
 
     conn.connections.forEach(({ glowPath, mainPath, dot, locId }, i) => {
-      const loc = LOCS.find(l=>l.id===locId);
+      const loc = LOC_MAP[locId];
       if(!loc){ glowPath.style.display='none'; mainPath.style.display='none'; dot.style.display='none'; return; }
       const pt = m.latLngToContainerPoint([loc.lat, loc.lng]);
       const tx = mapRect.left + pt.x;
@@ -961,7 +975,7 @@ function updateConnPositions(theme, animate){
   }
 
   // Loc mode (mekan seçilince): source = map pin, targets = film panel items
-  const loc = LOCS.find(l=>l.id===conn.locId);
+  const loc = LOC_MAP[conn.locId];
   if(!loc) return;
   const pt = m.latLngToContainerPoint([loc.lat, loc.lng]);
   const sx = mapRect.left + pt.x;
@@ -1029,12 +1043,26 @@ function updateConnPositions(theme, animate){
 }
 
 // Tüm scroll ve move eventlerinde çağrılır — sadece koordinat günceller
+const _connRaf = {};
 function liveUpdateConn(theme){
-  if(activeConns[theme]) updateConnPositions(theme, false);
+  if(!activeConns[theme]) return;
+  if(_connRaf[theme]) return; // already queued this frame
+  _connRaf[theme] = requestAnimationFrame(()=>{
+    _connRaf[theme] = null;
+    if(activeConns[theme]) updateConnPositions(theme, false);
+  });
 }
 
 /* ── LABEL COLLISION DETECTION ── */
+let _labelRaf = null;
 function eUpdateLabelVisibility(){
+  if(_labelRaf) return;
+  _labelRaf = requestAnimationFrame(()=>{
+    _labelRaf = null;
+    _eUpdateLabelVisibilityImpl();
+  });
+}
+function _eUpdateLabelVisibilityImpl(){
   const m = maps['E'];
   if(!m) return;
 

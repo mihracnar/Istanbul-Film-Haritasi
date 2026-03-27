@@ -68,7 +68,7 @@ function eToggleDecade(d){
 
 function eOpenDecadesForFilms(filmIds){
   filmIds.forEach(fid=>{
-    const f = FILMS.find(x=>x.id===fid);
+    const f = FILM_MAP[fid];
     if(!f) return;
     const d = String(Math.floor(f.year/10)*10);
     if(!eOpenDecades.has(d)){
@@ -87,7 +87,8 @@ function eOpenDecadesForFilms(filmIds){
 function eUpdateCounts(){
   const visible = FILMS.filter(f=>
     (!eActiveGenre  || f.genre===eActiveGenre) &&
-    (!eActiveDir    || f.dir===eActiveDir)
+    (!eActiveDir    || f.dir===eActiveDir)    &&
+    (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
   );
   document.getElementById('eCountsEl').innerHTML =
     `${visible.length} film<br>${LOCS.length} mekan`;
@@ -95,13 +96,15 @@ function eUpdateCounts(){
 
 function eApplyFilters(){
   const filtered = FILMS.filter(f=>
-    (!eActiveGenre || f.genre===eActiveGenre) &&
-    (!eActiveDir   || f.dir===eActiveDir)
+    (!eActiveGenre  || f.genre===eActiveGenre) &&
+    (!eActiveDir    || f.dir===eActiveDir)    &&
+    (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
   );
   eRenderFilms(filtered);
   eUpdateCounts();
+  const filteredIds = new Set(filtered.map(f=>f.id));
   LOCS.forEach(loc=>{
-    const has = loc.films.some(fid=>filtered.find(f=>f.id===fid));
+    const has = loc.films.some(fid=>filteredIds.has(fid));
     const el = document.getElementById('eLoc'+loc.id);
     if(el) el.style.opacity = has ? '1' : '0.28';
   });
@@ -152,8 +155,8 @@ function ePinHighlight(locId, on, _retry){
   }
 }
 
-async function eSelectLoc(id){
-  const loc = LOCS.find(l=>l.id===id); if(!loc) return;
+function eSelectLoc(id){
+  const loc = LOC_MAP[id]; if(!loc) return;
 
   // Yönetmen filtresi aktifse kaldır
   if(eActiveDir){
@@ -182,18 +185,29 @@ async function eSelectLoc(id){
   const first = document.getElementById('eFilm'+loc.films[0]);
   if(first) first.scrollIntoView({block:'nearest'});
 
+  // Media panel açıksa kapat — pin işlemlerinden ÖNCE (yoksa _restore kırmızıyı ezer)
+  clearHighlights();
+  clearSelLayers();
+  clearConnLines();
+  const mpEl = document.getElementById('mp');
+  if(mpEl.classList.contains('open')){
+    mpEl.classList.remove('open');
+    const fp = document.querySelector('#cE .e-fp');
+    if(fp) fp.style.visibility = '';
+  }
+
   ePinsResetAll(new Set([id]));
   eActiveLoc = id;
   ePinHighlight(id, true);
 
   const bar = document.getElementById('eLocBar');
   bar.classList.add('loc-gallery-bar');
-  bar.innerHTML = await buildLocGallery(loc.id,'E');
+  bar.innerHTML = buildLocGallerySkeleton(loc, 'E'); // anında göster
   bar.style.display = 'flex';
   bar.style.flexDirection = 'column';
-  if(document.getElementById('mp').classList.contains('open')) closeMedia();
+  fillLocGallery(loc.id, 'E'); // async, arka planda doldur
   if(maps.E){
-    maps.E.setView([loc.lat, loc.lng], 14, {animate:true});
+    maps.E.setView([loc.lat, loc.lng], 15, {animate:true});
     setTimeout(()=>buildConnLine('E', loc.id), 320);
   }
 }

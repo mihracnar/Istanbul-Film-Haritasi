@@ -102,6 +102,7 @@ async function loadSheetsData() {
     // Sadece en az 1 filme bağlı ve kategorisi olan mekanları göster
     LOCS = LOCS.filter(l => l.films.length > 0 && l.cat && l.cat.trim() !== '');
 
+    buildLookupMaps();
     return true;
   } catch(e) {
     console.error('Sheets yükleneme hatası:', e);
