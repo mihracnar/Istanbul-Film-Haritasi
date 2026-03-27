@@ -1,0 +1,83 @@
+3|İstanbul'un Gizi|1936|Andrew Marton
+4|Bizans'ın Can Çekişmesi|1913|Louis Feuillade
+7|Topkapı|1962|Jules Dassin
+17|Çarli'nin Melekleri|2019|Elizabeth Banks
+22|Altın Şehir|1965|Orhan Elmas
+37|Hababm Sınıfı Sınıfta Kaldı|1976|Ertem Eğilmez
+39|Hababam Sınıfı 'Merhaba' (2000)|2000|Kartal Tibet
+45|Sev Kradeşim|1972|Ertem Eğilmez
+48|Kin|1974|Natuk Baytan
+51|Darbukatör Baryam|1993|Bülent Terzioğlu
+68|Paşa Kızı|1967|Türker İnanoğlu
+72|Anjelik Osmanlı Saraylarında|1967|Ülkü Erakalın
+73|Canavarların Sevgilisi ( Le Amanti Del Mostro)|1974|Sergio Garrone
+74|Ölümün Nefesi (Le Mano Che Nutre La Morte)|1974|Sergio Garrone
+95|Kara Köpekler Havlarken|2009|Mayrna Gorbach Er, Mehmet Bahadır Er
+97|Recep İvedik Serisi|2008|Togan Gökbakar
+116|Vesikalı Yarim|1965|Lütfi Ömer Akad
+121|Şöfor Nebahat|1960|Metin Erksan
+124|Demiryolu Fırtına İnsanları|1979|Yavuz Özkan
+128|Kapıcılar Kralıı|1977|Zeki Ökten
+133|Dönersen Islık Çal|1992|Orhan Oğuz
+144|Namuslu|1985|Ertem Eğilmez
+151|Şakayla Karışık|1965|Osman F. Seden
+155|Ay|1989|Reha Erdem
+162|Karakmomik Filmler|2019|Cem Yılmaz
+164|Kızın Ayşe|1974|Yücel Çakmaklı
+212|Kırık Anahtar|1963|Nişan Hançer
+221|Zilli Zarife|1967|Memduh Ün
+230|Vatan Kurtaran Aslan|1966|Tunç Başaran
+233|Harun Reşid'in Gözdesi|1967|Atıf Yılmaz
+234|Yedi Dağın Aslanı|1966|Yılmaz Atadeniz
+237|Büyük Şamata|1973|Aram Gülyüz
+243|Şabanoğlu Şaban|1977|Ertem Eğilmez
+260|Şaşkın Baba|1964|Hulki Saner
+266|Son Kurban|1967|Oksal Pekmezoğlu
+269|Battalgazin'nin İntikamı|1973|Natuk Baytan
+278|Haydut Avcısı|1972|Melih Gülgen
+279|Atçalı Kel Memet|1964|Asaf Tengiz
+287|Yankesici|1974|Naki Yurter
+289|Dört Hergele|1974|Yılmaz Atadeniz, Giulio Giuseppe Negri
+309|Kırık Çanaklar|1960|Memduh Ün
+314|Cafer Çocuk Hırsızı|1962|Hulki Saner
+315|Ömercik Babasının Oğlu|1969|Aram Gülyüz
+328|Demiryol|1979|Yavuz Özkan
+331|Son Vurgun|1967|Oksal Pekmezoğlu
+356|Cumhuriyet|1998|Ziya Öztan
+360|Yıldzıların Altında|1965|Ülkü Erakalın
+362|İnek Şaban|1978|Osman F. Seden
+371|Kahraman Denizciler|1953|Refik Kemal Arduman
+372|Ada Sahillerinde|1956|Cüneyt Örs
+375|Ayrı Dünya|1961|Ümit Utku
+384|Üç Sevdalı Kız|1967|Sırrı Gültekin
+390|Adada Son Gece|1992|Cemal Gözütok
+391|Köpekler Adası|1996|Halit Refiğ
+404|Organize İşler Sazan Sarmalı|2018|Yılmaz Erdoğan
+420|İstanbul Yıldızları|1952|Orhan Atadeniz, Mehmet Muhtar
+421|Sevmek Günah mı ?|1959|Hulki Saner
+424|Aşk Yarası|1962|Mehmet Dinler
+425|Cilalı İbo Zoraki Baba|1961|Mehmet Dinler
+427|Gol Kralı Cafer|1962|Hulki Saner
+428|Pembe Panter|1974|Hulki Saner
+429|Kavgasız Yaşayalım|1963|Sırrı Gültekin
+434|Dişi Örümcek|1964|Süreyya Duru
+438|Şenol Birol,Gol|1965|Nejat Saydam
+442|İç Güveysi (Mürebbiye )|1970|İlhan Engin
+444|Hayat mı Bu ?|1972|Orhan Aksoy
+446|Teslim Ol Baba|1973|Temel Gürsu
+456|Biyonik Futbolcu|1978|Yılmaz Atadeniz
+467|İstanbul'da Aşk Başkadır|1961|Süreyya Duru
+468|İşte Beyoğlu|1987|Tomris Giritlioğlu
+469|Tarlabaşı Tarlabaşı|1989|Hilmi Etikan
+470|Galatasaray Belgeseli|1995|Şehbal Şenyurt
+471|Beyoğlu'nda Bir Levanten Giovanni Scognamillo|2006|Ebubekir Çetinkaya
+472|Yaşayan Mekanlar Büyük Londra Oteli|2007|Nazmiye Karadağ
+474|Ankara Casusu / 5 Fingers|1952|Joseph L. Mankiewicz
+476|Yaşayan Mekanlar Doğan Apartmanı|2007|Nazmiye Karadağ
+477|Tarlabaşı|2010|Fatih Pınar
+478|Unutma Beni İstanbul|2010|Hany Abu-Assad, Stefan Arsenijevic, Aida Begic, Eric Nazarian, Stergios Niziris, Omar Shargawi, Josefina Markarian
+482|Bütün Meyhaneleri İstanbul'un|2012|Taner Alp
+483|Beyoğlu'nun Roman Havası|2013|Hilal Akçay
+484|Cennetin Düşüşü|2014|Ersin Kana
+488|Öldüren Bahar|1962|Süha Doğan
+491|Şoförler Kıralı|1964|Nejat Saydam
