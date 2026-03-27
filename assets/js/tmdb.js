@@ -27,55 +27,68 @@ const tmdbCache = (() => {
 
 function tmdbCacheSave() {
   try { sessionStorage.setItem(TMDB_CACHE_KEY, JSON.stringify(tmdbCache)); }
-  catch(e) {} // storage dolu olabilir, sessizce geç
+  catch(e) {}
 }
+
+// Sayfa yüklenince data/tmdb-cache.json'dan önceden üretilmiş cache'i yükle
+async function loadPrebuiltCache() {
+  try {
+    const res = await fetch('data/tmdb-cache.json');
+    if(!res.ok) return;
+    const prebuilt = await res.json();
+    let added = 0;
+    Object.entries(prebuilt).forEach(([id, val]) => {
+      if(!tmdbCache[id]) { tmdbCache[id] = val; added++; }
+    });
+    if(added > 0) {
+      tmdbCacheSave();
+      console.log('TMDB prebuilt cache: ' + added + ' film yüklendi');
+    }
+  } catch(e) {}
+}
+loadPrebuiltCache();
 
 async function fetchTMDB(film) {
   if (tmdbCache[film.id]) return tmdbCache[film.id];
   try {
+    // 1. ADIM: Doğrudan Arama
     const q = encodeURIComponent(film.title);
-    const yr = film.year || '';
-
-    // Arama: ad + yıl
-    const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${q}&year=${yr}&language=tr-TR`);
+    const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${q}&year=${film.year}&language=tr-TR`);
     const data = await res.json();
-    let results = data.results || [];
+    let target = data.results?.[0];
 
-    // Bulamazsa yılsız
-    if (!results.length) {
-      const res2 = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${q}&language=tr-TR`);
-      const data2 = await res2.json();
-      results = data2.results || [];
+    // 2. ADIM: Sonuç yoksa veya isim çok kısaysa yönetmen üzerinden ara
+    if (!target || film.title.length <= 3) {
+      const pRes = await fetch(`${TMDB_BASE}/search/person?api_key=${TMDB_KEY}&query=${encodeURIComponent(film.dir)}`);
+      const pData = await pRes.json();
+      if (pData.results?.length > 0) {
+        const dirId = pData.results[0].id;
+        const dRes = await fetch(`${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_crew=${dirId}`);
+        const dData = await dRes.json();
+        target = dData.results.find(m =>
+          m.title.toLowerCase() === film.title.toLowerCase() ||
+          m.original_title.toLowerCase() === film.title.toLowerCase()
+        );
+      }
     }
+    if (!target) return null;
 
-    if (!results.length) return null;
-
-    // İlk 5 sonuç içinde yıla en yakın olanı seç
-    const best = results.slice(0, 5).reduce((best, m) => {
-      if (!film.year) return best || m;
-      const mYear = parseInt((m.release_date || '').slice(0, 4), 10);
-      const bestYear = parseInt((best?.release_date || '').slice(0, 4), 10);
-      const mDiff = Math.abs(mYear - film.year);
-      const bestDiff = Math.abs(bestYear - film.year);
-      return mDiff <= bestDiff ? m : best;
-    }, null) || results[0];
-
-    // Detay + görseller
-    const detRes = await fetch(`${TMDB_BASE}/movie/${best.id}?api_key=${TMDB_KEY}&append_to_response=images&language=tr-TR&include_image_language=tr,en,null`);
+    // 3. ADIM: Detayları Çek
+    const detRes = await fetch(`${TMDB_BASE}/movie/${target.id}?api_key=${TMDB_KEY}&append_to_response=images,credits&language=tr-TR&include_image_language=tr,en,null`);
     const detail = await detRes.json();
-
     const backdrops = (detail.images?.backdrops || []).slice(0, 8);
     const result = {
-      poster:   best.poster_path   ? TMDB_IMG + best.poster_path : null,
-      backdrop: best.backdrop_path ? TMDB_IMG_ORIG + best.backdrop_path : null,
-      desc:     detail.overview || best.overview || '',
+      poster:   detail.poster_path   ? TMDB_IMG + detail.poster_path : null,
+      backdrop: detail.backdrop_path ? TMDB_IMG_ORIG + detail.backdrop_path : null,
+      desc:     detail.overview || '',
       stills:   backdrops.map(b => TMDB_IMG + b.file_path),
-      tmdbId:   best.id,
+      tmdbId:   detail.id,
     };
     tmdbCache[film.id] = result;
     tmdbCacheSave();
     return result;
-  } catch(e) {
+  } catch (e) {
+    console.error('TMDB Fetch Hatası:', e);
     return null;
   }
 }

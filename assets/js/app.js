@@ -11,20 +11,6 @@ function buildE(){
     chips.appendChild(btn);
   });
 
-  // Decade chips
-  const decades = [...new Set(FILMS.map(f=>Math.floor(f.year/10)*10))].sort();
-  const dcEl = document.getElementById('eDecadeChips');
-  const labels = {1990:"'90",2000:"'00",2010:"'10",2020:"'20"};
-  decades.forEach(d=>{
-    const btn = document.createElement('button');
-    btn.className = 'e-decade-chip';
-    btn.dataset.decade = d;
-    btn.textContent = labels[d] || ("'"+String(d).slice(2));
-    btn.title = `${d}–${d+9}`;
-    btn.onclick = ()=> eSetDecade(d, btn);
-    dcEl.appendChild(btn);
-  });
-
   // Loc category chips
   const ALL_LOC_CATS = ['Plato','Stüdyo','Sokak','Simge Yapı','Otel','Okul','Diğer'];
   const lcEl = document.getElementById('eLocCatChips');
@@ -47,25 +33,12 @@ function buildE(){
 }
 
 function eSyncFilterHeights(){
-  const genre  = document.getElementById('eGenreChips');
-  const decade = document.getElementById('eDecadeChips');
-  const cats   = document.getElementById('eLocCatChips');
-  if(!genre||!decade||!cats) return;
-  const total = genre.offsetHeight + decade.offsetHeight;
-  cats.style.height = total + 'px';
+  const genre = document.getElementById('eGenreChips');
+  const cats  = document.getElementById('eLocCatChips');
+  if(!genre||!cats) return;
+  cats.style.height = genre.offsetHeight + 'px';
 }
 
-function eSetDecade(d, btn){
-  if(eActiveDecade === d){
-    eActiveDecade = '';
-    btn.classList.remove('on');
-  } else {
-    eActiveDecade = d;
-    document.querySelectorAll('.e-decade-chip').forEach(b=>b.classList.remove('on'));
-    btn.classList.add('on');
-  }
-  eApplyFilters();
-}
 
 function eSetGenre(g, btn){
   eActiveGenre = g;
@@ -82,62 +55,82 @@ function eSetGenre(g, btn){
 let eSearchFocusIdx = -1;
 let eSearchItems    = []; // flat list for keyboard nav
 
-function eSearchType(val){
+function eSearchType(val) {
   eSearchFocusIdx = -1;
-  const drop  = document.getElementById('eSearchDrop');
+  const drop = document.getElementById('eSearchDrop');
   const clear = document.getElementById('eSearchClear');
   const q = val.trim().toLowerCase();
   clear.classList.toggle('on', val.length > 0);
+  if (!q) {
+    drop.classList.remove('open');
+    drop.innerHTML = '';
+    eSearchItems = [];
+    return;
+  }
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const hi = (str) => str.replace(new RegExp(`(${esc(q)})`, 'gi'), '<em>$1</em>');
 
-  if(!q){ drop.classList.remove('open'); drop.innerHTML=''; eSearchItems=[]; return; }
+  const films = FILMS.filter(f =>
+    f.title.toLowerCase().includes(q) || f.dir.toLowerCase().includes(q)
+  ).sort((a, b) => {
+    const aT = a.title.toLowerCase(), bT = b.title.toLowerCase();
+    if (aT === q && bT !== q) return -1;
+    if (bT === q && aT !== q) return 1;
+    if (aT.startsWith(q) && !bT.startsWith(q)) return -1;
+    if (!aT.startsWith(q) && bT.startsWith(q)) return 1;
+    return b.year - a.year;
+  });
 
-  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const hi  = (str) => str.replace(new RegExp(`(${esc(q)})`, 'gi'), '<em>$1</em>');
+  const locs = LOCS.filter(l => l.name.toLowerCase().includes(q))
+    .sort((a, b) => {
+      const aN = a.name.toLowerCase(), bN = b.name.toLowerCase();
+      if (aN === q) return -1;
+      if (aN.startsWith(q) && !bN.startsWith(q)) return -1;
+      return aN.localeCompare(bN);
+    });
 
-  const films = FILMS.filter(f=>
-    f.title.toLowerCase().includes(q) || f.dir.toLowerCase().includes(q));
-  const locs  = LOCS.filter(l=> l.name.toLowerCase().includes(q));
-  const dirs  = [...new Set(FILMS.map(f=>f.dir))].filter(d=> d.toLowerCase().includes(q));
+  const dirs = [...new Set(FILMS.map(f => f.dir))].filter(d =>
+    d.toLowerCase().includes(q)
+  ).sort((a, b) => a.toLowerCase().startsWith(q) ? -1 : 0);
 
   eSearchItems = [];
   let html = '';
 
-  if(films.length){
+  if (films.length) {
     html += `<div class="e-search-group-lbl type-film">FİLM</div>`;
-    films.slice(0,5).forEach(f=>{
+    films.slice(0, 6).forEach(f => {
       const idx = eSearchItems.length;
-      eSearchItems.push({type:'film', id:f.id});
+      eSearchItems.push({ type: 'film', id: f.id });
       html += `<div class="e-search-item type-film" data-idx="${idx}" onmousedown="eSearchSelect(${idx})">
         <span class="e-search-item-name">${hi(f.title)}</span>
         <span class="e-search-item-sub">${f.year} · ${f.genre}</span>
       </div>`;
     });
   }
-  if(locs.length){
+  if (locs.length) {
     html += `<div class="e-search-group-lbl type-loc">MEKAN</div>`;
-    locs.slice(0,5).forEach(l=>{
+    locs.slice(0, 5).forEach(l => {
       const idx = eSearchItems.length;
-      eSearchItems.push({type:'loc', id:l.id});
+      eSearchItems.push({ type: 'loc', id: l.id });
       html += `<div class="e-search-item type-loc" data-idx="${idx}" onmousedown="eSearchSelect(${idx})">
         <span class="e-search-item-name">${hi(l.name)}</span>
         <span class="e-search-item-sub">${l.ilce} · ${l.cat}</span>
       </div>`;
     });
   }
-  if(dirs.length){
-    html += `<div class="e-search-group-lbl type-dir">YÖNETMEn</div>`;
-    dirs.slice(0,4).forEach(d=>{
+  if (dirs.length) {
+    html += `<div class="e-search-group-lbl type-dir">YÖNETMEN</div>`;
+    dirs.slice(0, 4).forEach(d => {
       const idx = eSearchItems.length;
-      eSearchItems.push({type:'dir', dir:d});
-      const count = FILMS.filter(f=>f.dir===d).length;
+      eSearchItems.push({ type: 'dir', dir: d });
+      const count = FILMS.filter(f => f.dir === d).length;
       html += `<div class="e-search-item type-dir" data-idx="${idx}" onmousedown="eSearchSelect(${idx})">
         <span class="e-search-item-name">${hi(d)}</span>
         <span class="e-search-item-sub">${count} film</span>
       </div>`;
     });
   }
-
-  if(!html){ drop.classList.remove('open'); drop.innerHTML=''; return; }
+  if (!html) { drop.classList.remove('open'); drop.innerHTML = ''; return; }
   drop.innerHTML = html;
   drop.classList.add('open');
 }
@@ -155,11 +148,34 @@ function eSearchSelect(idx){
   } else if(item.type==='loc'){
     eSelectLoc(item.id);
   } else if(item.type==='dir'){
+    // Media paneli açıksa kapat
+    if(document.getElementById('mp').classList.contains('open')) closeMedia();
     eActiveDir = item.dir;
     eApplyFilters();
+    eFilterMapMarkers();
+    // Badge güncelle
     const badge = document.getElementById('eDirBadge');
-    document.getElementById('eDirBadgeLbl').textContent = '× ' + item.dir;
+    document.getElementById('eDirBadgeLbl').textContent = item.dir;
     badge.style.display = 'flex';
+    // O yönetmenin filmlerinin bulunduğu tüm decadeleri aç
+    const dirFilmIds = FILMS.filter(f=>f.dir===item.dir).map(f=>f.id);
+    eOpenDecadesForFilms(dirFilmIds);
+    // İlk filme scroll + tüm filmler flash
+    if(dirFilmIds.length){
+      const firstEl = document.getElementById('eFilm'+dirFilmIds[0]);
+      if(firstEl) setTimeout(()=>firstEl.scrollIntoView({block:'nearest'}), 100);
+      // Kısa gecikme ile flash — decadeler açıldıktan sonra
+      setTimeout(()=>{
+        dirFilmIds.forEach((fid, i)=>{
+          const el = document.getElementById('eFilm'+fid);
+          if(!el) return;
+          el.classList.remove('flash');
+          void el.offsetWidth; // reflow
+          setTimeout(()=>el.classList.add('flash'), i * 60);
+          setTimeout(()=>el.classList.remove('flash'), i * 60 + 800);
+        });
+      }, 150);
+    }
   }
 }
 
@@ -186,6 +202,7 @@ function eSearchClear(){
     const badge = document.getElementById('eDirBadge');
     if(badge) badge.style.display = 'none';
     eApplyFilters();
+    eFilterMapMarkers();
   }
 }
 
@@ -203,6 +220,7 @@ function eSetLocCat(c, btn){
     btn.classList.add('on');
   }
   eRenderLocs();
+  eFilterMapMarkers();
 }
 
 function eSetTheme(mode){

@@ -502,9 +502,15 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 .e-filters{display:flex;align-items:center;gap:0;margin-left:auto;flex-shrink:0}
 
 /* Active director badge */
-#cE .e-dir-badge{display:flex;align-items:center;gap:6px;padding:5px 14px;background:#f5fff5;border-bottom:1px solid #cce8cc;flex-shrink:0}
-#cE .e-dir-badge-lbl{font-size:9px;font-family:'DM Mono',monospace;color:#226622;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#cE .e-dir-badge-x{background:none;border:none;color:#226622;font-size:14px;cursor:pointer;padding:0;line-height:1;flex-shrink:0}
+#cE .e-dir-badge{display:flex;align-items:center;gap:6px;padding:5px 14px;background:#fff8f7;border-bottom:2px solid #f03010;flex-shrink:0}
+#cE .e-dir-badge-lbl{font-size:9px;font-family:'DM Mono',monospace;color:#f03010;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.5px}
+#cE .e-dir-badge-lbl::before{content:"YÖN. ";opacity:.5;font-size:8px}
+#cE .e-dir-badge-x{background:none;border:none;color:#f03010;font-size:14px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;opacity:.7}
+#cE .e-dir-badge-x:hover{opacity:1}
+/* dark mod */
+#cE.renkli .e-dir-badge{background:#1a0e0e;border-bottom-color:#f03010}
+#cE.renkli .e-dir-badge-lbl{color:#f03010}
+#cE.renkli .e-dir-badge-x{color:#f03010}
 .e-search-wrap{position:absolute;top:48px;left:50%;transform:translateX(-50%);width:min(480px,70%);z-index:800}
 .e-search-box{display:flex;align-items:center;background:rgba(255,255,255,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:2px solid #000;box-shadow:4px 4px 0 rgba(0,0,0,.10);height:40px;padding:0 12px;gap:8px}
 .e-search-icon{font-size:16px;color:#aaa;flex-shrink:0;line-height:1}
@@ -628,3 +634,43 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 #mp.renkli .mp-thumb.sel{outline:2px solid #f03010!important}
 #mp.renkli .mp-play{background:#f03010!important;color:#fff!important}
 /* swiss pin — inline only */
+
+/* ── Film accordion (10 yıllık gruplar) ── */
+.e-decade-group{}
+.e-decade-hdr{
+  position:sticky;top:0;z-index:5;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;
+  background:#fff;
+  border-bottom:1px solid #e8e8e8;
+  cursor:pointer;user-select:none;
+}
+.e-decade-hdr-lbl{
+  font-size:12px;font-family:'DM Mono',monospace;
+  font-weight:700;color:#f03010;min-width:44px;
+}
+.e-decade-hdr-bar{flex:1;height:1px;background:#e8e8e8}
+.e-decade-hdr-cnt{font-size:9px;font-family:'DM Mono',monospace;color:#bbb}
+.e-decade-hdr-arr{font-size:11px;color:#bbb;transition:transform .2s;display:inline-block}
+.e-decade-hdr-arr.open{transform:rotate(90deg)}
+.e-decade-body{overflow:hidden;transition:max-height .25s ease}
+.e-decade-body.open{max-height:9999px}
+.e-decade-body.closed{max-height:0}
+/* renkli dark mod */
+#cE.renkli .e-decade-hdr{background:#1c1c1c;border-bottom-color:#333}
+#cE.renkli .e-decade-hdr-bar{background:#333}
+#cE.renkli .e-decade-hdr-arr{color:#555}
+
+/* ── Film satırı flash animasyonu ── */
+@keyframes filmFlash {
+  0%   { background: transparent; }
+  25%  { background: #f03010; color: #fff; }
+  75%  { background: #fff0ee; }
+  100% { background: transparent; }
+}
+.e-film-row.flash {
+  animation: filmFlash 0.7s ease-out forwards;
+}
+#cE.renkli .e-film-row.flash {
+  animation: filmFlash 0.7s ease-out forwards;
+}
