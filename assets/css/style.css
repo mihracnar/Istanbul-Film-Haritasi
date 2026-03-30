@@ -39,9 +39,9 @@ button{cursor:pointer;font-family:inherit}
 #cA .leaflet-attribution-container,.leaflet-control-attribution{display:none}
 #cB .leaflet-control-zoom a{background:#fff!important;color:#111!important;border-color:#ddd!important}
 #cD .leaflet-control-zoom a{background:#f0e8d4!important;color:#c47c1e!important;border-color:#ddd5be!important}
-#cD .leaflet-tile-pane{filter:sepia(.35) brightness(.95) saturate(.75)}
+#cD .leaflet-tile-pane{filter:sepia(.35) brightness(.95) saturate(.75);will-change:transform;transform:translateZ(0)}
 #cE .leaflet-control-zoom a{background:#fff!important;color:#000!important;border-color:#ccc!important;border-radius:0!important}
-#cE .leaflet-tile-pane{filter:grayscale(1) brightness(1.04)}
+#cE .leaflet-tile-pane{filter:grayscale(1) brightness(1.04);will-change:transform;transform:translateZ(0)}
 .leaflet-control-attribution{font-size:7px!important;opacity:.5}
 
 /* ═══════════════════════════════════════════════
@@ -775,3 +775,12 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 #cE.renkli .e-decade-seg  { color:#555; }
 #cE.renkli .e-decade-seg:hover { color:#ddd; }
 #cE.renkli .e-decade-seg.on    { color:#f0f0f0;font-weight:700;background:#2a2a2a; }
+
+/* ── GPU-accelerated zoom ── */
+.leaflet-zoom-animated { will-change: transform; }
+.leaflet-tile-container { will-change: transform; }
+
+/* ── Leaflet zoom animasyonu hızlandır ── */
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.1s cubic-bezier(0,0,0.25,1) !important;
+}

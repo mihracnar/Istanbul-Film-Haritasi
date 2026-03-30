@@ -118,7 +118,7 @@ function ePinsResetAll(dimOthers){
     const label = p.querySelector('.pin-label');
     const stem  = p.querySelector('.pin-stem');
     const wrap  = p.closest('.leaflet-marker-icon');
-    if(label){ label.style.background='#000'; label.style.color='#fff'; }
+    if(label){ label.style.background='rgba(0,0,0,.85)'; label.style.color='#fff'; }
     if(stem)   stem.style.background='#000';
     if(wrap){
       wrap.style.zIndex = '';
@@ -141,13 +141,13 @@ function ePinHighlight(locId, on, _retry){
   const stem  = pinEl.querySelector('.pin-stem');
   const wrap  = pinEl.closest('.leaflet-marker-icon');
   if(on){
-    if(label){ label.style.background='#f03010'; label.style.color='#fff'; }
+    if(label){ label.style.background='rgba(240,48,16,.85)'; label.style.color='#fff'; }
     if(stem)   stem.style.background='#f03010';
     if(wrap){ wrap.style.zIndex = 9000; wrap.style.opacity = '1'; }
     const mk = markers['E']?.[locId];
     if(mk) mk.setZIndexOffset(1000);
   } else {
-    if(label){ label.style.background='#000'; label.style.color='#fff'; }
+    if(label){ label.style.background='rgba(0,0,0,.85)'; label.style.color='#fff'; }
     if(stem)   stem.style.background='#000';
     if(wrap){ wrap.style.zIndex = ''; wrap.style.opacity = '1'; }
     const mk = markers['E']?.[locId];

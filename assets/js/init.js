@@ -1,13 +1,37 @@
 function attachMapRedraw(theme, m){
   let redrawTimer;
-  m.on('move zoom', ()=>{
-    liveUpdateConn(theme);
-    clearTimeout(redrawTimer);
-    redrawTimer = setTimeout(()=>{
-      liveUpdateConn(theme);
-      if(theme === 'E') eUpdateLabelVisibility();
-    }, 150);
+  let isZooming = false;
+  let zoomEndTimer;
+
+  m.on('zoomstart', ()=>{
+    isZooming = true;
+    // Zoom başlayınca labellara transition ekle, görünmeyecekler
+    if(theme === 'E'){
+      document.querySelectorAll('#mapE .pin-label').forEach(el=>{
+        el.style.transition = 'opacity .35s ease';
+      });
+    }
   });
+
+  m.on('zoomend', ()=>{
+    clearTimeout(zoomEndTimer);
+    zoomEndTimer = setTimeout(()=>{
+      isZooming = false;
+      if(theme === 'E') eUpdateLabelVisibility();
+    }, 80); // zoom animasyonu bitince
+  });
+
+  m.on('move', ()=>{
+    liveUpdateConn(theme);
+    if(!isZooming){
+      clearTimeout(redrawTimer);
+      redrawTimer = setTimeout(()=>{
+        liveUpdateConn(theme);
+        if(theme === 'E') eUpdateLabelVisibility();
+      }, 120);
+    }
+  });
+
   if(theme === 'E') setTimeout(eUpdateLabelVisibility, 400);
 }
 

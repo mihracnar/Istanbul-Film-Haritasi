@@ -1,4 +1,13 @@
 const IST = [41.0082, 28.9784];
+
+/* ── Drag guard — yanlışıkla pin seçimini önler ── */
+const _dragGuard = { x:0, y:0, dragging:false };
+document.addEventListener('mousedown', e=>{ _dragGuard.x=e.clientX; _dragGuard.y=e.clientY; _dragGuard.dragging=false; });
+document.addEventListener('touchstart', e=>{ const t=e.touches[0]; _dragGuard.x=t.clientX; _dragGuard.y=t.clientY; _dragGuard.dragging=false; }, {passive:true});
+document.addEventListener('mousemove', e=>{
+  if(Math.abs(e.clientX-_dragGuard.x)>6 || Math.abs(e.clientY-_dragGuard.y)>6) _dragGuard.dragging=true;
+});
+function _wasDragged(){ return _dragGuard.dragging; }
 const maps = {};
 const markers = {};
 const inited = { A:false, B:false, D:false, E:false };
@@ -288,10 +297,10 @@ function highlightFilmOnMap(theme, filmId){
 
   // Fly to all locs — zoom 13
   if(locs.length === 1){
-    m.flyTo([locs[0].lat, locs[0].lng], 15, { duration: 1.1 });
+    m.flyTo([locs[0].lat, locs[0].lng], 15, { duration: 0.75 });
   } else if(locs.length > 1){
     const bounds = L.latLngBounds(locs.map(l=>[l.lat, l.lng]));
-    m.flyToBounds(bounds, { padding:[60,60], maxZoom:15, duration:1.1 });
+    m.flyToBounds(bounds, { padding:[60,60], maxZoom:15, duration: 0.75 });
   }
 }
 
@@ -371,26 +380,39 @@ function pinHTML_D(loc, theme){
 
 function pinHTML_E(loc, theme){
   const c = TYPE_COLORS.E[loc.type];
-  return `<div onclick="event.stopPropagation();selectLoc('E',${loc.id})" id="pin-E-${loc.id}"
+  return `<div onclick="event.stopPropagation();if(_wasDragged())return;selectLoc('E',${loc.id})" id="pin-E-${loc.id}"
     style="position:absolute;top:0;left:0;transform:translate(-50%,-100%);
            cursor:pointer;text-align:center;z-index:10">
-    <div class="pin-label" style="display:inline-flex;align-items:center;gap:5px;
-                background:#000;color:#fff;
-                padding:4px 9px;white-space:nowrap;
-                font-family:sans-serif;font-size:10px;font-weight:700;
-                box-shadow:2px 2px 0 rgba(0,0,0,.15);transition:background .25s,color .25s">
+    <div class="pin-label" style="display:inline-flex;align-items:flex-start;gap:5px;
+                background:rgba(0,0,0,.85);color:#fff;
+                padding:4px 9px;white-space:normal;width:max-content;max-width:90px;
+                font-family:sans-serif;font-size:10px;font-weight:700;line-height:1.3;
+                box-shadow:2px 2px 0 rgba(0,0,0,.15);transition:background .25s,color .25s,opacity .35s ease">
       <span class="pin-dot" style="width:4px;height:4px;background:${c};
-                   flex-shrink:0;display:inline-block;transition:background .25s"></span>
-      ${loc.name}
-      <span style="font-size:8px;opacity:.45;font-weight:300">&times;${loc.films.length}</span>
+                   flex-shrink:0;display:inline-block;margin-top:4px;transition:background .25s"></span>
+      <span style="min-width:0;overflow-wrap:break-word">${loc.name}</span>
+      <span style="font-size:8px;opacity:.45;font-weight:300;flex-shrink:0;margin-top:1px">&times;${loc.films.length}</span>
     </div>
     <div class="pin-stem" style="width:1px;height:7px;background:#000;margin:0 auto;transition:background .25s"></div>
   </div>`;
 }
 
 function createMap(id, theme){
-  const m = L.map(id, { zoomControl:true, attributionControl:true });
-  L.tileLayer(TILE[theme].url, { attribution:TILE[theme].attr, maxZoom:18 }).addTo(m);
+  const m = L.map(id, {
+    zoomControl:            true,
+    attributionControl:     true,
+    minZoom:                10,
+    zoomSnap:            0,
+    zoomDelta:           1,
+    wheelPxPerZoomLevel: 40,
+  });
+  L.tileLayer(TILE[theme].url, {
+    attribution:       TILE[theme].attr,
+    maxZoom:           18,
+    updateWhenZooming: true,
+    updateWhenIdle:    true,
+    keepBuffer:        4,
+  }).addTo(m);
   m.setView(IST, 12);
   maps[theme] = m;
   markers[theme] = {};
@@ -1096,13 +1118,13 @@ function _eUpdateLabelVisibilityImpl(){
 
     // Seçili (kırmızı) pin her zaman görünür
     const bg = label.style.background;
-    const isSelected = bg === 'rgb(240, 48, 16)' || bg === '#f03010';
+    const isSelected = bg.includes('240') && bg.includes('48') && bg.includes('16');
     if(isSelected){
       placed.push({ x1: pt.x - 30, y1: pt.y - 18, x2: pt.x + 80, y2: pt.y + 4 });
       return;
     }
 
-    const w = loc.name.length * 5.5 + 22;
+    const w = Math.min(loc.name.length * 5.5 + 22, 98); // max-width:120px + padding
     const h = 14;
     const x1 = pt.x - 2, y1 = pt.y - h - 8;
     const x2 = x1 + w,   y2 = y1 + h;
