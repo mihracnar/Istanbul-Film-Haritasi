@@ -46,6 +46,12 @@ async function openMedia(filmId){
     `<button class="mp-loc-chip" onclick="mpGoLoc(${l.id})">${l.name}</button>`
   ).join('');
   document.getElementById('mp').classList.add('open');
+  // Mobil: sheet backdrop ve panel'leri kapat
+  document.getElementById('mSheetBackdrop')?.classList.remove('on');
+  document.querySelector('#cE .e-sb')?.classList.remove('m-open');
+  document.querySelector('#cE .e-fp')?.classList.remove('m-open');
+  document.querySelectorAll('.m-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mTabHarita')?.classList.add('active');
   const theme = document.getElementById('preview').dataset.theme;
   if(theme==='E'){
     document.querySelector('#cE .e-fp').style.visibility='hidden';
