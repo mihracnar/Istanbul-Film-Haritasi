@@ -784,3 +784,187 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 .leaflet-zoom-anim .leaflet-zoom-animated {
   transition: transform 0.1s cubic-bezier(0,0,0.25,1) !important;
 }
+
+/* ══════════════════════════════════════════════
+   MOBİL — ≤ 640px
+══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* infobar gizle */
+  #infobar { display: none; }
+
+  /* Bağlantı çizgileri mobilde gizle */
+  #conn-svg { display: none; }
+
+  /* ── Top bar ──────────────────────────────── */
+  #cE .top {
+    height: 52px;
+    padding: 0 14px;
+    gap: 10px;
+  }
+  #cE .sw-s,
+  #cE .sw-d,
+  #cE .e-counts { display: none; }
+  #cE .e-theme-toggle { margin-left: auto; }
+  #eLogoImg { height: 32px !important; }
+
+  /* ── Body: harita tam ekran ───────────────── */
+  #cE .body {
+    position: relative;
+    flex-direction: column;
+  }
+
+  /* Sol ve sağ paneller — bottom sheet ────── */
+  #cE .e-sb,
+  #cE .e-fp {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    width: 100% !important;
+    min-width: unset !important;
+    height: 70vh;
+    border: none !important;
+    border-top: 2px solid #000 !important;
+    border-radius: 0;
+    z-index: 1200;
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.22,.68,0,1.1);
+    overflow: hidden;
+  }
+  #cE .e-sb.m-open,
+  #cE .e-fp.m-open {
+    transform: translateY(0);
+  }
+
+  /* Sheet handle */
+  #cE .e-sb::before,
+  #cE .e-fp::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+    margin: 8px auto 4px;
+    flex-shrink: 0;
+  }
+
+  /* Harita alanı tam ekran */
+  #cE .map-wrap {
+    flex: 1;
+    height: calc(100vh - 52px - 56px); /* top + nav */
+  }
+
+  /* Search overlay mobilde — ortalanmış, %75 */
+  .e-search-wrap {
+    top: 10px !important;
+    width: 75% !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+
+  /* Media panel tam genişlik */
+  #preview[data-theme="E"] #mp {
+    width: 100% !important;
+    min-width: unset !important;
+    border-left: none !important;
+    border-top: 2px solid #000;
+    top: auto !important;
+    height: 85vh;
+    bottom: 56px; /* nav yüksekliği */
+    transform: translateY(110%);
+  }
+  #preview[data-theme="E"] #mp.open {
+    transform: translateY(0);
+  }
+
+  /* Galeri bar mobil */
+  #cE .e-loc-bar {
+    bottom: 56px;
+  }
+
+  /* Loc cat chip container — tek satır yatay scroll */
+  #cE .e-loc-cat-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 8px;
+    border-bottom-width: 1px;
+    height: 36px;
+    align-items: center;
+    gap: 5px;
+  }
+  #cE .e-loc-cat-chip {
+    padding: 3px 8px;
+    font-size: 8px;
+    flex-shrink: 0;
+    height: 24px;
+    line-height: 1;
+  }
+
+  /* Decade bar */
+  #cE .e-decade-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Genre chips */
+  #cE .e-genre-chips-inner {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sheet overlay backdrop */
+  #mSheetBackdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 1190;
+  }
+  #mSheetBackdrop.on { display: block; }
+
+  /* ── Bottom nav ───────────────────────────── */
+  #mobileNav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: #fff;
+    border-top: 2px solid #000;
+    z-index: 1300;
+  }
+  .m-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: background .1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-tab:active { background: #f5f5f5; }
+  .m-tab.active { background: #f5f5f5; }
+  .m-tab-icon { font-size: 16px; color: #aaa; }
+  .m-tab-lbl  { font-size: 9px; letter-spacing: 1px; color: #aaa; text-transform: uppercase; }
+  .m-tab.active .m-tab-icon,
+  .m-tab.active .m-tab-lbl  { color: #f03010; }
+
+  /* Dark mode */
+  #cE.renkli #mobileNav { background: #1c1c1c; border-top-color: #383838; }
+  #cE.renkli .m-tab:active { background: #2a2a2a; }
+  #cE.renkli .m-tab.active { background: #2a2a2a; }
+
+}
+
+/* Desktop'ta bottom nav gizle */
+@media (min-width: 641px) {
+  #mobileNav { display: none; }
+  #mSheetBackdrop { display: none !important; }
+}

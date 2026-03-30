@@ -245,7 +245,18 @@ function selectLoc(theme, id){
   if(theme==='A') aSelectLoc(id);
   else if(theme==='B') bSelectLoc(id);
   else if(theme==='D') dSelectLoc(id);
-  else if(theme==='E') eSelectLoc(id);
+  else if(theme==='E'){
+    eSelectLoc(id);
+    // Mobil: mekan seçilince sadece o mekânın filmlerini göster, sheet'i aç
+    if(window.innerWidth <= 640 && window.mSetTab){
+      const loc = LOC_MAP[id];
+      if(loc){
+        const locFilms = loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean);
+        eRenderFilms(locFilms);
+      }
+      window.mSetTab('filmler', document.getElementById('mTabFilmler'));
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -1143,3 +1154,51 @@ function _eUpdateLabelVisibilityImpl(){
     }
   });
 }
+
+/* ══════════════════════════════════════════════
+   MOBİL TAB & SHEET YÖNETİMİ
+══════════════════════════════════════════════ */
+(function(){
+  // Backdrop oluştur
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mSheetBackdrop';
+  backdrop.onclick = ()=> mSetTab('harita', document.getElementById('mTabHarita'));
+  document.body.appendChild(backdrop);
+
+  window.mSetTab = function(tab, btn){
+    const isMobile = window.innerWidth <= 640;
+    if(!isMobile) return;
+
+    const sb = document.querySelector('#cE .e-sb');
+    const fp = document.querySelector('#cE .e-fp');
+
+    // Tüm tabları sıfırla
+    document.querySelectorAll('.m-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+
+    if(tab === 'harita'){
+      sb?.classList.remove('m-open');
+      fp?.classList.remove('m-open');
+      backdrop.classList.remove('on');
+      // Film listesini sıfırla — mekan filtresi kalmasın
+      if(typeof eApplyFilters === 'function') eApplyFilters();
+    } else if(tab === 'mekanlar'){
+      sb?.classList.add('m-open');
+      fp?.classList.remove('m-open');
+      backdrop.classList.add('on');
+    } else if(tab === 'filmler'){
+      fp?.classList.add('m-open');
+      sb?.classList.remove('m-open');
+      backdrop.classList.add('on');
+    }
+  };
+
+  // Resize'da sheet'leri kapat
+  window.addEventListener('resize', ()=>{
+    if(window.innerWidth > 640){
+      document.querySelector('#cE .e-sb')?.classList.remove('m-open');
+      document.querySelector('#cE .e-fp')?.classList.remove('m-open');
+      document.getElementById('mSheetBackdrop')?.classList.remove('on');
+    }
+  });
+})();
