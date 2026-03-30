@@ -872,6 +872,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
     height: 85vh;
     bottom: 56px; /* nav yüksekliği */
     transform: translateY(110%);
+    z-index: 1250; /* backdrop(1190) üstünde, nav(1300) altında */
   }
   #preview[data-theme="E"] #mp.open {
     transform: translateY(0);
