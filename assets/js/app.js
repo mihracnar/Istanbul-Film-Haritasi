@@ -51,10 +51,12 @@ function buildE(){
 }
 
 function eSyncFilterHeights(){
+  if(window.innerWidth <= 640) return; // mobilde JS sync yok, CSS height geçerli
   const genre = document.getElementById('eGenreChips');
   const cats  = document.getElementById('eLocCatChips');
   if(!genre||!cats) return;
-  cats.style.height = genre.offsetHeight + 'px';
+  cats.style.minHeight = genre.offsetHeight + 'px'; // height yerine minHeight — wrap'e izin ver
+  cats.style.height = 'auto';
 }
 
 
