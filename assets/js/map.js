@@ -17,6 +17,8 @@ const inited = { A:false, B:false, D:false, E:false };
 ══════════════════════════════════════════════ */
 let currentFilm = null;
 let eActiveLoc  = null;
+let _mPrevSheet = null; // mobil: film detayından önce hangi sheet açıktı
+let _mPrevLoc   = null; // mobil: film detayından önce hangi mekan seçiliydi
 
 function stillUrl(seed, w, h){ return `https://picsum.photos/seed/${seed}/${w}/${h}`; }
 
@@ -46,12 +48,19 @@ async function openMedia(filmId){
     `<button class="mp-loc-chip" onclick="mpGoLoc(${l.id})">${l.name}</button>`
   ).join('');
   document.getElementById('mp').classList.add('open');
-  // Mobil: sheet backdrop ve panel'leri kapat
-  document.getElementById('mSheetBackdrop')?.classList.remove('on');
-  document.querySelector('#cE .e-sb')?.classList.remove('m-open');
-  document.querySelector('#cE .e-fp')?.classList.remove('m-open');
-  document.querySelectorAll('.m-tab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('mTabHarita')?.classList.add('active');
+  // Mobil: hangi sheet açıktı + hangi mekan seçiliydi kaydet, sonra kapat
+  if(window.innerWidth <= 640){
+    const _sb = document.querySelector('#cE .e-sb');
+    const _fp = document.querySelector('#cE .e-fp');
+    _mPrevSheet = _fp?.classList.contains('m-open') ? 'filmler'
+                : _sb?.classList.contains('m-open') ? 'mekanlar' : null;
+    _mPrevLoc = eActiveLoc; // clearHighlights'tan önce kaydet
+    document.getElementById('mSheetBackdrop')?.classList.remove('on');
+    _sb?.classList.remove('m-open');
+    _fp?.classList.remove('m-open');
+    document.querySelectorAll('.m-tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('mTabHarita')?.classList.add('active');
+  }
   const theme = document.getElementById('preview').dataset.theme;
   if(theme==='E'){
     document.querySelector('#cE .e-fp').style.visibility='hidden';
@@ -136,19 +145,43 @@ function mpPlayClick(){
 }
 
 function mpGoLoc(locId){
-  // keep media panel open — just pan map to the location
   const theme = document.getElementById('preview').dataset.theme;
   const loc = LOC_MAP[locId];
-  if(loc && maps[theme]) maps[theme].setView([loc.lat, loc.lng], 15, {animate:true});
+  if(!loc) return;
+  if(window.innerWidth <= 640){
+    // Mobil: mekanı seç, detayı kapat
+    _mPrevSheet = null;
+    closeMedia();
+    eSelectLoc(locId);
+    // Haritaya geç — sheet kapat
+    if(window.mSetTab) window.mSetTab('harita', document.getElementById('mTabHarita'));
+  } else {
+    maps[theme]?.setView([loc.lat, loc.lng], 15, {animate:true});
+  }
 }
 
 function closeMedia(){
   document.getElementById('mp').classList.remove('open');
   const fp = document.querySelector('#cE .e-fp');
   if(fp) fp.style.visibility='';
+  // Mobil: clearHighlights eActiveLoc'u sıfırlar — önce kaydet
+  const _savedLoc = window.innerWidth <= 640 ? eActiveLoc : null;
   clearHighlights();
   clearSelLayers();
   clearConnLines();
+  // Mobil: eActiveLoc'u restore et, önceki sheet'e dön
+  if(window.innerWidth <= 640){
+    if(_mPrevLoc){
+      eActiveLoc = _mPrevLoc;
+      ePinHighlight(_mPrevLoc, true);
+      _mPrevLoc = null;
+    }
+    if(_mPrevSheet && window.mSetTab){
+      const tabId = _mPrevSheet === 'filmler' ? 'mTabFilmler' : 'mTabMekanlar';
+      window.mSetTab(_mPrevSheet, document.getElementById(tabId));
+      _mPrevSheet = null;
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -312,12 +345,14 @@ function highlightFilmOnMap(theme, filmId){
     }
   });
 
-  // Fly to all locs — zoom 13
-  if(locs.length === 1){
-    m.flyTo([locs[0].lat, locs[0].lng], 15, { duration: 0.75 });
-  } else if(locs.length > 1){
-    const bounds = L.latLngBounds(locs.map(l=>[l.lat, l.lng]));
-    m.flyToBounds(bounds, { padding:[60,60], maxZoom:15, duration: 0.75 });
+  // Fly to all locs — mobilde yapma
+  if(window.innerWidth > 640){
+    if(locs.length === 1){
+      m.flyTo([locs[0].lat, locs[0].lng], 15, { duration: 0.75 });
+    } else if(locs.length > 1){
+      const bounds = L.latLngBounds(locs.map(l=>[l.lat, l.lng]));
+      m.flyToBounds(bounds, { padding:[60,60], maxZoom:15, duration: 0.75 });
+    }
   }
 }
 
@@ -703,17 +738,19 @@ function eFilterMapMarkers(){
     if(visible) visibleLocs.push(loc);
   });
 
-  // Görünen noktalara uç
-  const hasFilter = eActiveLocCat || eActiveDir || eActiveGenre || eActiveDecade;
-  if(hasFilter && visibleLocs.length) {
-    if(visibleLocs.length === 1) {
-      m.flyTo([visibleLocs[0].lat, visibleLocs[0].lng], 14, { duration: 0.8 });
-    } else {
-      const bounds = L.latLngBounds(visibleLocs.map(l => [l.lat, l.lng]));
-      m.flyToBounds(bounds, { padding: [60, 60], maxZoom: 15, duration: 0.8 });
+  // Görünen noktalara uç — mobilde yapma
+  if(window.innerWidth > 640){
+    const hasFilter = eActiveLocCat || eActiveDir || eActiveGenre || eActiveDecade;
+    if(hasFilter && visibleLocs.length) {
+      if(visibleLocs.length === 1) {
+        m.flyTo([visibleLocs[0].lat, visibleLocs[0].lng], 14, { duration: 0.8 });
+      } else {
+        const bounds = L.latLngBounds(visibleLocs.map(l => [l.lat, l.lng]));
+        m.flyToBounds(bounds, { padding: [60, 60], maxZoom: 15, duration: 0.8 });
+      }
+    } else if(!hasFilter) {
+      m.flyTo(IST, 12, { duration: 0.8 });
     }
-  } else if(!hasFilter) {
-    m.flyTo(IST, 12, { duration: 0.8 });
   }
 }
 
@@ -1186,16 +1223,31 @@ function _eUpdateLabelVisibilityImpl(){
       sb?.classList.remove('m-open');
       fp?.classList.remove('m-open');
       backdrop.classList.remove('on');
-      // Film listesini sıfırla — mekan filtresi kalmasın
-      if(typeof eApplyFilters === 'function') eApplyFilters();
     } else if(tab === 'mekanlar'){
       sb?.classList.add('m-open');
       fp?.classList.remove('m-open');
       backdrop.classList.add('on');
+      // Seçili mekan varsa scroll'a getir ve .on sınıfını restore et
+      if(eActiveLoc){
+        const locEl = document.getElementById('eLoc'+eActiveLoc);
+        if(locEl){
+          locEl.scrollIntoView({block:'nearest'});
+          document.querySelectorAll('#cE .e-loc-row').forEach(el=>el.classList.remove('on'));
+          locEl.classList.add('on');
+        }
+      }
     } else if(tab === 'filmler'){
       fp?.classList.add('m-open');
       sb?.classList.remove('m-open');
       backdrop.classList.add('on');
+      // Seçili mekan varsa sadece o mekânın filmlerini göster
+      if(eActiveLoc){
+        const loc = LOC_MAP[eActiveLoc];
+        if(loc){
+          const locFilms = loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean);
+          eRenderFilms(locFilms);
+        }
+      }
     }
   };
 
