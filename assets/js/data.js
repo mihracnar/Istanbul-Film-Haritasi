@@ -1,3 +1,10 @@
+/* ════════════════════════════════════════════════════════════
+   data.js — MapLibre Edition
+   Tek değişiklik: koordinatlar hâlâ {lat, lng} obje alanları
+   olarak saklanır (LOC_MAP/LOCS.lat, LOCS.lng), ama MapLibre'ye
+   her yerde [lng, lat] olarak geçilir. Bu dosya değişmez.
+   ════════════════════════════════════════════════════════════ */
+
 function parseCSV(text) {
   const rows = [];
   const lines = text.split('\n');
@@ -52,18 +59,19 @@ async function loadSheetsData() {
     const [filmText, mekanText] = await Promise.all([filmRes.text(), mekanRes.text()]);
 
     // Parse mekanlar
-    const mekanRows = parseCSV(mekanText).slice(1); // skip header
+    const mekanRows = parseCSV(mekanText).slice(1);
     LOCS = mekanRows
       .filter(r => r[0] && r[0].startsWith('M'))
       .map(r => {
         const idNum = parseInt(r[0].replace('M',''), 10);
+        // Sheets'te koordinatlar "lat,lng" sırası
         const coords = (r[3] || '').replace(/"/g,'').split(',').map(s => parseFloat(s.trim()));
         return {
           id:   idNum,
           name: r[1] || '',
           cat:  r[2] || 'Diğer',
-          lat:  coords[0] || 0,
-          lng:  coords[1] || 0,
+          lat:  coords[0] || 0,  // coğrafi enlem — loc.lat olarak sakla
+          lng:  coords[1] || 0,  // coğrafi boylam — loc.lng olarak sakla
           ilce: r[4] || '',
           type: 'nokta',
           films: []
@@ -94,12 +102,11 @@ async function loadSheetsData() {
       })
       .filter(f => f.genre && f.genre.trim() !== '' && f.locs.length > 0);
 
-    // LOCS.films: her mekanın filmlerini doldur
+    // LOCS.films
     LOCS.forEach(loc => {
       loc.films = FILMS.filter(f => f.locs.includes(loc.id)).map(f => f.id);
     });
 
-    // Sadece en az 1 filme bağlı ve kategorisi olan mekanları göster
     LOCS = LOCS.filter(l => l.films.length > 0 && l.cat && l.cat.trim() !== '');
 
     buildLookupMaps();

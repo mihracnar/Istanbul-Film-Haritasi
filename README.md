@@ -32,8 +32,8 @@
 | `config.js` | Google Sheets URL'leri, GID sabitleri, `FILMS`/`LOCS` dizileri, `FILM_MAP`/`LOC_MAP` lookup dictionary'leri, `buildLookupMaps()` |
 | `data.js` | Google Sheets CSV parser, `loadSheetsData()`, mekan-film eşleştirme (`matchLocs`), Türkçe karakter normalizasyonu |
 | `tmdb.js` | TMDB API entegrasyonu, `fetchTMDB()`, prebuilt cache yükleme (`tmdb-cache.json`), sessionStorage cache |
-| `map.js` | Leaflet harita, pin HTML üretimi, bağlantı çizgileri, media panel, galeri, lightbox, zoom/wheel yönetimi, mobil tab sistemi |
-| `ui.js` | Mekan listesi render, film accordion render, filtre uygulama, pin highlight/reset, `eSelectLoc()` |
+| `map.js` | MapLibre harita, GeoJSON kaynak/layer yönetimi, bağlantı çizgileri, pin highlight sistemi, media panel, galeri, lightbox, mobil tab sistemi, filtre state |
+| `ui.js` | Mekan listesi render, film accordion render, filtre uygulama, `eSelectLoc()` |
 | `app.js` | Chip üretimi (mekan kategorisi, decade, tür), filtre setter fonksiyonları, arama (search) mantığı, tema toggle |
 | `init.js` | `initApp()`, `attachMapRedraw()`, scroll event listener'ları |
 
@@ -67,8 +67,9 @@ let eActiveDecade = 0;    // dönem (0 = tümü)
 ```
 
 Her filtre değişikliğinde iki fonksiyon çağrılır:
+
 - `eApplyFilters()` → film listesini ve mekan sidebar opacity'sini günceller
-- `eFilterMapMarkers()` → haritadaki pin görünürlüğünü günceller, desktop'ta filtrelenmiş alana fly eder
+- `eFilterMapMarkers()` → haritadaki layer filter'ını günceller, desktop'ta filtrelenmiş alana fly eder; sonunda `_syncSelSource()` çağırarak seçili pin durumunu korur
 
 ### Filtre Bileşenleri
 
@@ -78,7 +79,7 @@ Her filtre değişikliğinde iki fonksiyon çağrılır:
 
 **Sağ panel (Filmler)**
 - Film türü chip'leri: datadan dinamik üretilir
-- Decade segmentleri: datadan dinamik üretilir, accordion listesinin hemen üstünde, tab/underline görsel dil
+- Decade segmentleri: datadan dinamik üretilir, accordion listesinin hemen üstünde
 
 **Arama (Search)**
 - Film adı, mekan adı ve yönetmen adında aynı anda arama
@@ -87,39 +88,79 @@ Her filtre değişikliğinde iki fonksiyon çağrılır:
 
 ---
 
-## Pin Sistemi
+## Harita Motoru
 
-Her mekan için `pinHTML_E()` fonksiyonu inline HTML pin üretir. Pin yapısı:
+**MapLibre GL JS 4.7.1** kullanılır. Tile kaynağı: CARTO Positron GL Style (`basemaps.cartocdn.com`).
+
+### Harita Hazırlık Kontrolü
+
+`_isMapReady(m)` fonksiyonu ile haritanın kullanıma hazır olup olmadığı kontrol edilir:
+
+```js
+function _isMapReady(m){ return m && inited.E && !!m.getSource('locs'); }
+```
+
+`m.loaded()` **kullanılmaz** — MapLibre tile yüklenirken bu metod `false` döndürdüğünden `flyTo` animasyonu sırasında tüm pin/label işlemleri bloke olur. Bunun yerine `m.on('load')` callback'inde `inited.E = true` yapılır ve bu flag kalıcı olarak `true` kalır.
+
+---
+
+## Pin ve Label Sistemi
+
+Pinler ve label'lar Leaflet HTML marker yerine **MapLibre GL JS symbol layer'ları** kullanır. Collision detection native MapLibre tarafından yönetilir.
+
+### Layer Yapısı (oluşturma sırası)
+
+| Layer ID | Tür | Kaynak | Açıklama |
+|---|---|---|---|
+| `conn-lines-layer` | `line` | `conn-lines` | Bağlantı çizgileri (kırmızı, kesikli) |
+| `conn-dots-layer` | `circle` | `conn-dots` | Bağlantı bitiş noktaları (kırmızı) |
+| `locs-dots` | `circle` | `locs` | Pin noktaları — her zaman siyah |
+| `locs-labels` | `symbol` | `locs` | Siyah label box — seçili pinler gizlenir |
+| `locs-labels-sel` | `symbol` | `locs-sel` | Kırmızı label box — yalnızca seçili pinler |
+
+### Label İçeriği (`text-field` format)
 
 ```
-div#pin-E-{id}
-  ├── div.pin-label   ← mekan adı + film sayısı, max-width:90px, 2 satır wrap
-  └── div.pin-stem    ← dikey ince çizgi
+• (kırmızı)  MekanAdı (beyaz)  ×FilmSayısı (yarı saydam)
 ```
 
-**Pin renk durumları:**
-- Normal: `rgba(0,0,0,0.85)` — siyah
-- Seçili / vurgulanmış: `rgba(240,48,16,0.85)` — kırmızı
-- Çakışma sonucu gizli: `opacity:0` (label), stem küçük noktaya dönüşür
+`•` karakteri format expression içinde `text-color: '#f03010'` ile ayrı renklendirme alır.
 
-**Label collision detection** (`eUpdateLabelVisibility`):
-- Zoom bitiminde (zoomend + 80ms) çalışır, pan sırasında çalışmaz
-- Film sayısına göre öncelik: fazla film → her zaman görünür
-- Seçili pin her zaman görünür
-- Çakışan label `opacity:0` ile fade-out yapılır (anlık `display:none` değil)
+### Seçili Pin Mekanizması
 
-**Drag guard:** Pin tıklamaları, harita sürükleme sırasında iptal edilir. `mousedown` → `mousemove` > 6px olursa `_dragGuard.dragging = true`, `onclick` bunu kontrol eder.
+Seçim durumu `_selPinIds` (Set) ile takip edilir. `_syncSelSource()` her değişimde:
+
+1. `_selPinIds`'deki mekanları `locs-sel` GeoJSON source'a yazar
+2. `locs-labels` layer'ına `!match` filter uygular (seçili ID'leri gizler)
+3. `locs-labels-sel` layer'ı bu ID'leri kırmızı background ile gösterir
+4. `feature-state.selected` ile `locs-dots` renk durumunu günceller
+
+`ePinHighlight(locId, on)` → `_selPinIds`'e ekler/çıkarır → `_syncSelSource()` çağırır.
+`ePinsResetAll()` → seti temizler → `_syncSelSource()` çağırır.
+
+**Film seçilince** `highlightFilmOnMap()` tüm mekan pinlerini vurgular ve haritayı o filmin mekanlarının sınırlarına `fitBounds` ile oturtur (`maxZoom: 13`, mekan sayısına göre dinamik `padding`).
 
 ---
 
 ## Bağlantı Çizgileri (Connection Lines)
 
-Mekan veya film seçilince SVG layer üzerinde eğrisel bağlantı çizgileri çizilir.
+Mekan seçilince harita canvas'ı üzerinde GeoJSON LineLayer kullanılarak eğrisel kesikli çizgiler çizilir.
 
-- Mekan seçimi → mekan pin'i kaynak, film listesi satırları hedef
-- Film seçimi → film satırı kaynak, haritadaki mekan pin'leri hedef
-- `liveUpdateConn()` scroll/pan sırasında çizgileri canlı yeniden konumlandırır (RAF korumalı)
-- Mobilde tamamen devre dışı (`#conn-svg { display:none }`)
+- Kaynak: mekan pin'inin harita üzerindeki ekran koordinatı (`m.project([lng, lat])`)
+- Hedef: film listesi satırlarının ekran koordinatı (`getBoundingClientRect()`)
+- Koordinatlar `m.unproject()` ile geo'ya dönüştürülür, harita hareket ettikçe `liveUpdateConn()` ile yenilenir
+- Bezier eğrisi cubic control point'lerle hesaplanır; yüksek dikey sapma (`0.35`) belirgin yay oluşturur
+- `conn-lines-layer`: `line-color: '#f03010'`, `line-dasharray: [5,4]`
+- RAF guard (`_connRaf`) aynı frame'de birden fazla çizim engelini sağlar
+
+### Timer Yönetimi
+
+`eSelectLoc()` iki aşamalı çizim başlatır:
+
+1. **300ms sonra** (accordion animasyonu ~250ms biter): `buildConnLine()` ilk çizim
+2. **moveend + 80ms**: flyTo bitince pin konumu yeniden hesaplanır
+
+`closeMedia()` ve `openMedia()`, `_connTimer` ve `_connMoveEnd` handler'larını iptal ederek stale çizim oluşmasını engeller.
 
 ---
 
@@ -133,7 +174,7 @@ Film seçilince sağdan kayan panel:
 4. Açıklama
 5. Çekim Mekanları chip'leri (`mp-loc-chip`)
 
-**Mobilde:** tam genişlik, alttan yukarı slide, z-index backdrop'un üstünde (1250).
+Media panel açılınca sağ film panel `visibility:hidden` yapılır. Kapanınca restore edilir ve tüm highlight/conn state temizlenir.
 
 ---
 
@@ -147,56 +188,57 @@ Mekan seçilince haritanın altından çıkan görsel şerit:
 
 ---
 
-## Performans Optimizasyonları
-
-| Optimizasyon | Etki |
-|---|---|
-| `FILM_MAP` / `LOC_MAP` (O(1) lookup) | 14 adet `Array.find()` yerini aldı |
-| RAF guard — `liveUpdateConn` | Aynı frame'de birden fazla çağrı engellendi |
-| RAF guard — `eUpdateLabelVisibility` | Her frame'de collision detection önlendi |
-| `buildLocGallerySkeleton` | Mekan galerisinin anında açılması |
-| `updateWhenZooming: false` | Zoom sırasında yeni tile isteği atılmıyor |
-| `keepBuffer: 4` | Pan sırasında beyaz boşluk önlendi |
-| `will-change: transform` + `translateZ(0)` | Tile pane ve zoom katmanları GPU'ya alındı |
-
----
-
-## Zoom Davranışı
-
-```js
-L.map(id, {
-  zoomSnap:   0,    // snap yok, scroll ile 1:1
-  zoomDelta:  1,
-  wheelPxPerZoomLevel: 40,
-  minZoom:    10,
-})
-```
-
-Leaflet'in zoom animasyonu CSS override ile 0.1s'ye kısaltılmıştır:
-```css
-.leaflet-zoom-anim .leaflet-zoom-animated {
-  transition: transform 0.1s cubic-bezier(0,0,0.25,1) !important;
-}
-```
-
----
-
 ## Tema Sistemi
 
 İki tema: **Sade** (light) ve **Renkli** (dark).
 
 - Toggle: `eSetTheme('sade' | 'renkli')`
 - `#cE.renkli` class'ı CSS cascade üzerinden tüm renkleri değiştirir
-- Logo: `logo.png` (sade) ↔ `logo-dark.png` (renkli)
+- Logo: `logo.png` (sade) ↔ `logo_dark.png` (renkli)
 - Media panel: `#mp.renkli` class'ı ayrıca eklenir
+
+Sade modda harita canvas'ına `filter:grayscale` **uygulanmaz**; interaktif kırmızı elementler (pin label box, bağlantı çizgileri, nokta) her iki temada da renkli görünür. Harita görsel dili zaten düşük doygunluklu CARTO Positron tile'ına dayanır.
+
+---
+
+## Performans Optimizasyonları
+
+| Optimizasyon | Etki |
+|---|---|
+| `FILM_MAP` / `LOC_MAP` (O(1) lookup) | Dizilerde tekrarlı `find()` çağrısı kaldırıldı |
+| `inited.E` flag | `m.loaded()` tile-yükleme false pozitiflerini engeller |
+| RAF guard — `liveUpdateConn` | Aynı frame'de birden fazla GeoJSON güncelleme engellendi |
+| MapLibre native collision | JS label collision detection kaldırıldı |
+| `buildLocGallerySkeleton` | Mekan galerisinin anında açılması |
+| GeoJSON source separation | `locs-sel` ayrı source — seçili pin render'ı normal flow'u bozmaz |
+
+---
+
+## Zoom Davranışı
+
+```js
+new maplibregl.Map({
+  center: [28.9784, 41.0082],  // İstanbul
+  zoom:   12,
+  minZoom: 10,
+  maxZoom: 19,
+})
+```
+
+**Film seçimi zoom:**
+- Tek mekan → `flyTo({ zoom: 14 })`
+- Çoklu mekan → `fitBounds(bounds, { maxZoom: 13, padding: dinamik })`
+  - ≤3 mekan: `padding: 120`
+  - ≤8 mekan: `padding: 100`
+  - >8 mekan: `padding: 80`
+
+**Mekan seçimi zoom:** `flyTo({ zoom: 15, duration: 500 })`
 
 ---
 
 ## Chip Tasarım Sistemi
 
-3 filtre bileşeni için birleşik CSS token:
-
-**Mekan kategorisi + Film türü chip'leri:** aynı görsel dil
+**Mekan kategorisi + Film türü chip'leri:**
 ```css
 border: 1px solid #ddd;
 padding: 4px 9px;
@@ -204,14 +246,14 @@ font-size: 9px;
 /* active: */ background:#000; color:#fff;
 ```
 
-**Decade segmentleri:** farklı dil — tab/underline
+**Decade segmentleri:** tab/underline dili
 ```css
 border: none;
 border-bottom: 2px solid transparent;
 /* active: */ background:#efefef; font-weight:700;
 ```
 
-Sol panel chip yüksekliği, sağ panel genre chip yüksekliğiyle `eSyncFilterHeights()` ile hizalanır (`min-height` kullanılır, `height` değil — wrap'e izin vermek için).
+Sol panel chip yüksekliği, sağ panel genre chip yüksekliğiyle `eSyncFilterHeights()` ile hizalanır (`min-height` kullanılır, wrap'e izin vermek için).
 
 ---
 
@@ -220,7 +262,6 @@ Sol panel chip yüksekliği, sağ panel genre chip yüksekliğiyle `eSyncFilterH
 ### Layout
 - Harita tam ekran (top bar + bottom nav yüksekliği çıkarılarak)
 - Sol ve sağ paneller haritanın üzerine **bottom sheet** olarak açılır
-- `transform: translateY(100%)` → `translateY(0)` animasyonu
 
 ### Bottom Navigation
 ```
@@ -229,17 +270,14 @@ Sol panel chip yüksekliği, sağ panel genre chip yüksekliğiyle `eSyncFilterH
 
 ### Navigasyon Sürekliliği
 - Film detayı açılmadan önce hangi sheet'in açık olduğu `_mPrevSheet` ile kaydedilir
-- Seçili mekan `_mPrevLoc` ile kaydedilir (`clearHighlights()` bunu sildiği için)
-- Film detayı kapatılınca `_mPrevSheet` ve `_mPrevLoc` restore edilir
-- `mp-loc-chip`'e tıklanınca o mekan seçilir ve harita tab'ına geçilir
-- Filtre değiştiğinde ve film seçildiğinde harita fly/zoom yapmaz
+- Seçili mekan `_mPrevLoc` ile kaydedilir
+- Film detayı kapatılınca her ikisi restore edilir
 
 ### Devre Dışı Bırakılan Özellikler (Mobil)
-- Bağlantı çizgileri (`#conn-svg`)
+- Bağlantı çizgileri (mobilde `liveUpdateConn` çağrılmaz)
 - `eFilterMapMarkers` flyTo
 - `highlightFilmOnMap` flyTo
 - `eSyncFilterHeights` JS sync
-- infobar
 
 ---
 
@@ -256,17 +294,18 @@ Sol panel chip yüksekliği, sağ panel genre chip yüksekliğiyle `eSyncFilterH
 
 | Kütüphane | Versiyon | Kullanım |
 |---|---|---|
-| Leaflet | 1.9.4 | Harita |
-| CARTO | — | Tile layer (light) |
+| MapLibre GL JS | 4.7.1 | Harita motoru, tile render, symbol layer |
+| CARTO Positron GL | — | Tile layer (light, düşük doygunluk) |
 | TMDB API | v3 | Film görselleri ve açıklamaları |
-| Google Fonts | — | DM Mono, Teko |
+| Google Fonts | — | Cormorant Garamond, DM Mono, Teko, EB Garamond, Libre Baskerville |
 
 ---
 
 ## Geliştirme Notları
 
-- Tüm JS ES6+, modül sistemi yok, script tag sırası önemli: `config → data → tmdb → map → ui → app → init`
+- Tüm JS ES6+, modül sistemi yok. Script tag sırası kritik: `config → data → tmdb → map → ui → app → init`
+- Koordinatlar veri yapısında `{lat, lng}` olarak saklanır; MapLibre'ye her yerde `[lng, lat]` sırasıyla geçilir
 - `eSelectLoc()` sync fonksiyon — galeri skeleton pattern ile async bekleme kaldırıldı
-- Pin onclick'leri Leaflet marker üzerinde değil, inline HTML string içinde tanımlı (Leaflet `iconSize:[1,1]` nedeniyle)
+- `locs-labels-sel` click event'i `_setupEMapEvents()` içinde diğer layer'larla birlikte dinlenir
 - Google Sheets CSV'den gelen Türkçe karakterler `normStr()` ile normalize edilerek mekan eşleştirmesi yapılır
 - TMDB cache iki katmanlı: `data/tmdb-cache.json` (prebuilt, sayfa yükünde) + `sessionStorage` (runtime)

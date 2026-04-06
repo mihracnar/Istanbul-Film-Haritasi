@@ -24,7 +24,13 @@ function buildE(){
   });
 
   // Loc category chips
-  const ALL_LOC_CATS = ['Plato','Stüdyo','Sokak','Simge Yapı','Otel','Okul','Diğer'];
+  // Mekan kategorilerini datadan al — bilinen sıra korunur, yeni kategoriler sona eklenir
+  const PREF_ORDER = ['Plato','Stüdyo','Sokak','Simge Yapı','Otel','Okul','Diğer'];
+  const dataCats   = new Set(LOCS.map(l => l.cat).filter(Boolean));
+  const ALL_LOC_CATS = [
+    ...PREF_ORDER.filter(c => dataCats.has(c)),
+    ...[...dataCats].filter(c => !PREF_ORDER.includes(c)).sort()
+  ];
   const lcEl = document.getElementById('eLocCatChips');
   // TÜMÜ butonu
   const allBtn = document.createElement('button');

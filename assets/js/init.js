@@ -1,87 +1,75 @@
+/* ════════════════════════════════════════════════════════════
+   init.js — MapLibre Edition
+   - eUpdateLabelVisibility kaldırıldı (MapLibre native collision)
+   - attachMapRedraw sadeleştirildi
+   ════════════════════════════════════════════════════════════ */
+
 function attachMapRedraw(theme, m){
-  let redrawTimer;
-  let isZooming = false;
-  let zoomEndTimer;
-
-  m.on('zoomstart', ()=>{
-    isZooming = true;
-    // Zoom başlayınca labellara transition ekle, görünmeyecekler
-    if(theme === 'E'){
-      document.querySelectorAll('#mapE .pin-label').forEach(el=>{
-        el.style.transition = 'opacity .35s ease';
-      });
-    }
-  });
-
-  m.on('zoomend', ()=>{
-    clearTimeout(zoomEndTimer);
-    zoomEndTimer = setTimeout(()=>{
-      isZooming = false;
-      if(theme === 'E') eUpdateLabelVisibility();
-    }, 80); // zoom animasyonu bitince
-  });
-
+  // Pan/zoom sırasında bağlantı çizgilerini güncelle
+  // (target nokta screen-space'de kayıyor → yeni geo hesap gerekir)
   m.on('move', ()=>{
     liveUpdateConn(theme);
-    if(!isZooming){
-      clearTimeout(redrawTimer);
-      redrawTimer = setTimeout(()=>{
-        liveUpdateConn(theme);
-        if(theme === 'E') eUpdateLabelVisibility();
-      }, 120);
-    }
   });
 
-  if(theme === 'E') setTimeout(eUpdateLabelVisibility, 400);
+  // Label collision detection — MapLibre native, JS guard gerekmez
+  // Zoom animasyonu bitişi yok artık — MapLibre kendi yönetiyor
 }
 
-function eShowLoading(msg) {
+function eShowLoading(msg){
   let el = document.getElementById('eLoadingMsg');
-  if (!el) {
+  if(!el){
     el = document.createElement('div');
     el.id = 'eLoadingMsg';
-    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:2px solid #000;padding:20px 32px;font-family:"DM Mono",monospace;font-size:13px;z-index:9999;letter-spacing:1px';
+    el.style.cssText = [
+      'position:fixed', 'top:50%', 'left:50%',
+      'transform:translate(-50%,-50%)',
+      'background:#fff', 'border:2px solid #000',
+      'padding:20px 32px',
+      "font-family:'DM Mono',monospace",
+      'font-size:13px', 'z-index:9999', 'letter-spacing:1px'
+    ].join(';');
     document.body.appendChild(el);
   }
   el.textContent = msg;
 }
 
-function eHideLoading() {
+function eHideLoading(){
   const el = document.getElementById('eLoadingMsg');
-  if (el) el.remove();
+  if(el) el.remove();
 }
 
-async function initApp() {
+async function initApp(){
   eShowLoading('VERİ YÜKLENİYOR...');
   try {
     await loadSheetsData();
     console.log(`Yüklendi: ${FILMS.length} film, ${LOCS.length} mekan`);
-  } catch(e) {
+  } catch(e){
     console.error('initApp hata:', e);
   }
   eHideLoading();
   buildE();
   setTimeout(()=>{
-    inited.E = true;
-    createMap('mapE','E');
+    createMap('mapE', 'E');
     document.getElementById('preview').dataset.theme = 'E';
+    // inited.E, map.js içinde m.on('load') callback'inde true yapılır
   }, 80);
 }
 
 initApp();
 
+// Resize'da bağlantı çizgilerini temizle
 window.addEventListener('resize', ()=>{ clearConnLines(); });
 
+// Film paneli scroll'unda bağlantı çizgilerini güncelle
 window.addEventListener('scroll', e=>{
-  if(e.target && e.target.id === 'eFilms') {
-    requestAnimationFrame(()=> liveUpdateConn('E'));
+  if(e.target && e.target.id === 'eFilms'){
+    requestAnimationFrame(()=>liveUpdateConn('E'));
   }
 }, true);
 
-const PANEL_SCROLL_MAP = {
-  eLocs:'E', eFilms:'E',
-};
+// Panel scroll event'lerini dinle
+const PANEL_SCROLL_MAP = { eLocs:'E', eFilms:'E' };
 Object.entries(PANEL_SCROLL_MAP).forEach(([elId, theme])=>{
   const el = document.getElementById(elId);
-  if(el) el.addEventListener('scroll', ()=> requestAnimationFrame(()=> liveUpdateConn(theme)));
+  if(el) el.addEventListener('scroll', ()=>requestAnimationFrame(()=>liveUpdateConn(theme)));
 });

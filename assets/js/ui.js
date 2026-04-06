@@ -1,3 +1,10 @@
+/* ════════════════════════════════════════════════════════════
+   ui.js — MapLibre Edition
+   Değişiklikler:
+   - eSelectLoc: setView → flyTo (MapLibre)
+   - ePinsResetAll çağrısı güncellendi (artık argüman almıyor)
+   ════════════════════════════════════════════════════════════ */
+
 function eRenderLocs(){
   const list = eActiveLocCat ? LOCS.filter(l=>l.cat===eActiveLocCat) : LOCS;
   document.getElementById('eLocs').innerHTML = list.map(loc=>`
@@ -12,7 +19,6 @@ function eRenderLocs(){
 const eOpenDecades = new Set();
 
 function eDecadeLabel(d){
-  // Türkçe büyük ünlü uyumu — onlukların okunuşuna göre
   const tens = Math.floor((d % 100) / 10);
   const suffix = {0:'ler',1:'lar',2:'ler',3:'lar',4:'lar',5:'ler',6:'lar',7:'ler',8:'ler',9:'lar'}[tens];
   return String(d) + '\'' + suffix;
@@ -60,10 +66,10 @@ function eToggleDecade(d){
   const grp = document.querySelector('.e-decade-group[data-decade="'+d+'"]');
   if(!grp) return;
   const isOpen = eOpenDecades.has(key);
-  const arr = grp.querySelector('.e-decade-hdr-arr');
+  const arr  = grp.querySelector('.e-decade-hdr-arr');
   const body = grp.querySelector('.e-decade-body');
-  if(arr) arr.className = 'e-decade-hdr-arr'+(isOpen?' open':'');
-  if(body) body.className = 'e-decade-body'+(isOpen?' open':' closed');
+  if(arr)  arr.className  = 'e-decade-hdr-arr'  + (isOpen ? ' open' : '');
+  if(body) body.className = 'e-decade-body' + (isOpen ? ' open' : ' closed');
 }
 
 function eOpenDecadesForFilms(filmIds){
@@ -75,9 +81,9 @@ function eOpenDecadesForFilms(filmIds){
       eOpenDecades.add(d);
       const grp = document.querySelector('.e-decade-group[data-decade="'+d+'"]');
       if(grp){
-        const arr = grp.querySelector('.e-decade-hdr-arr');
+        const arr  = grp.querySelector('.e-decade-hdr-arr');
         const body = grp.querySelector('.e-decade-body');
-        if(arr) arr.className = 'e-decade-hdr-arr open';
+        if(arr)  arr.className  = 'e-decade-hdr-arr open';
         if(body) body.className = 'e-decade-body open';
       }
     }
@@ -87,7 +93,7 @@ function eOpenDecadesForFilms(filmIds){
 function eUpdateCounts(){
   const visible = FILMS.filter(f=>
     (!eActiveGenre  || f.genre===eActiveGenre) &&
-    (!eActiveDir    || f.dir===eActiveDir)    &&
+    (!eActiveDir    || f.dir===eActiveDir)     &&
     (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
   );
   document.getElementById('eCountsEl').innerHTML =
@@ -97,7 +103,7 @@ function eUpdateCounts(){
 function eApplyFilters(){
   const filtered = FILMS.filter(f=>
     (!eActiveGenre  || f.genre===eActiveGenre) &&
-    (!eActiveDir    || f.dir===eActiveDir)    &&
+    (!eActiveDir    || f.dir===eActiveDir)     &&
     (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
   );
   eRenderFilms(filtered);
@@ -108,51 +114,6 @@ function eApplyFilters(){
     const el = document.getElementById('eLoc'+loc.id);
     if(el) el.style.opacity = has ? '1' : '0.28';
   });
-}
-
-function ePinsResetAll(dimOthers){
-  // dimOthers: Set of locId's that are highlighted — others get dimmed
-  LOCS.forEach(l=>{
-    const p = document.getElementById('pin-E-'+l.id);
-    if(!p) return;
-    const label = p.querySelector('.pin-label');
-    const stem  = p.querySelector('.pin-stem');
-    const wrap  = p.closest('.leaflet-marker-icon');
-    if(label){ label.style.background='rgba(0,0,0,.85)'; label.style.color='#fff'; }
-    if(stem)   stem.style.background='#000';
-    if(wrap){
-      wrap.style.zIndex = '';
-      // Dim if others are highlighted
-      wrap.style.opacity = '1';
-    }
-    const mk = markers['E']?.[l.id];
-    if(mk) mk.setZIndexOffset(0);
-  });
-}
-
-function ePinHighlight(locId, on, _retry){
-  const pinEl = document.getElementById('pin-E-'+locId);
-  if(!pinEl){
-    // Leaflet henüz DOM'a yazmamış — daha uzun süre bekle
-    if(!_retry) setTimeout(()=>ePinHighlight(locId, on, true), 150);
-    return;
-  }
-  const label = pinEl.querySelector('.pin-label');
-  const stem  = pinEl.querySelector('.pin-stem');
-  const wrap  = pinEl.closest('.leaflet-marker-icon');
-  if(on){
-    if(label){ label.style.background='rgba(240,48,16,.85)'; label.style.color='#fff'; }
-    if(stem)   stem.style.background='#f03010';
-    if(wrap){ wrap.style.zIndex = 9000; wrap.style.opacity = '1'; }
-    const mk = markers['E']?.[locId];
-    if(mk) mk.setZIndexOffset(1000);
-  } else {
-    if(label){ label.style.background='rgba(0,0,0,.85)'; label.style.color='#fff'; }
-    if(stem)   stem.style.background='#000';
-    if(wrap){ wrap.style.zIndex = ''; wrap.style.opacity = '1'; }
-    const mk = markers['E']?.[locId];
-    if(mk) mk.setZIndexOffset(0);
-  }
 }
 
 function eSelectLoc(id){
@@ -166,11 +127,12 @@ function eSelectLoc(id){
     eApplyFilters();
     eFilterMapMarkers();
   }
+
   document.querySelectorAll('#cE .e-loc-row').forEach(el=>el.classList.remove('on'));
   const locEl = document.getElementById('eLoc'+id);
   if(locEl){ locEl.classList.add('on'); locEl.scrollIntoView({block:'nearest'}); }
 
-  // Tüm decadeleri kapat, sadece ilgili olanları aç
+  // Sadece bu mekânın filmlerinin bulunduğu decadeları aç
   eOpenDecades.clear();
   document.querySelectorAll('.e-decade-body').forEach(el=>el.className='e-decade-body closed');
   document.querySelectorAll('.e-decade-hdr-arr').forEach(el=>el.className='e-decade-hdr-arr');
@@ -185,7 +147,7 @@ function eSelectLoc(id){
   const first = document.getElementById('eFilm'+loc.films[0]);
   if(first) first.scrollIntoView({block:'nearest'});
 
-  // Media panel açıksa kapat — pin işlemlerinden ÖNCE (yoksa _restore kırmızıyı ezer)
+  // Media panel açıksa kapat
   clearHighlights();
   clearSelLayers();
   clearConnLines();
@@ -196,18 +158,35 @@ function eSelectLoc(id){
     if(fp) fp.style.visibility = '';
   }
 
-  ePinsResetAll(new Set([id]));
+  // Pin highlight — MapLibre feature-state (argümansız reset)
+  ePinsResetAll();
   eActiveLoc = id;
   ePinHighlight(id, true);
 
+  // Galeri bar
   const bar = document.getElementById('eLocBar');
   bar.classList.add('loc-gallery-bar');
-  bar.innerHTML = buildLocGallerySkeleton(loc, 'E'); // anında göster
+  bar.innerHTML = buildLocGallerySkeleton(loc, 'E');
   bar.style.display = 'flex';
   bar.style.flexDirection = 'column';
-  fillLocGallery(loc.id, 'E'); // async, arka planda doldur
+  fillLocGallery(loc.id, 'E');
+  // eLocBar açılınca harita konteyneri küçülür — MapLibre'ye haber ver
+
+
+  // Haritaya uç — MapLibre flyTo ([lng, lat] sırası!)
   if(maps.E){
-    maps.E.setView([loc.lat, loc.lng], 15, {animate:true});
-    setTimeout(()=>buildConnLine('E', loc.id), 320);
+    maps.E.flyTo({ center:[loc.lng, loc.lat], zoom:15, duration:500 });
+    if(window._connTimer) clearTimeout(window._connTimer);
+    if(window._connMoveEnd) { maps.E.off('moveend', window._connMoveEnd); window._connMoveEnd=null; }
+    const _targetLocId = loc.id;
+    window._connTimer = setTimeout(()=>{
+      window._connTimer = null;
+      if(eActiveLoc === _targetLocId) buildConnLine('E', _targetLocId);
+    }, 300);
+    window._connMoveEnd = () => {
+      window._connMoveEnd = null;
+      if(eActiveLoc === _targetLocId) setTimeout(()=>buildConnLine('E',_targetLocId), 80);
+    };
+    maps.E.once('moveend', window._connMoveEnd);
   }
 }
