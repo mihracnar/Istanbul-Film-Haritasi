@@ -449,7 +449,6 @@ function highlightFilmOnMap(theme, filmId){
       } else {
         const bounds = new maplibregl.LngLatBounds();
         locs.forEach(l => bounds.extend([l.lng, l.lat]));
-        // Mekan sayısına göre padding — fazla yakınlaşmayı önlemek için maxZoom düşük
         const pad = locs.length <= 3 ? 120 : locs.length <= 8 ? 100 : 80;
         m.fitBounds(bounds, { padding: pad, maxZoom: 13, duration: 750 });
       }
@@ -477,8 +476,8 @@ function clearSelLayers(){}
 function _bezierToGeo(m, sx, sy, tx, ty, steps){
   steps = steps || 20;
   const dx  = tx - sx;
-  const cx1 = sx + dx * 0.35,          cy1 = sy - Math.abs(dx) * 0.35;
-  const cx2 = tx - Math.abs(dx) * 0.25, cy2 = ty - Math.abs(dx) * 0.1;
+  const cx1 = sx + dx * 0.5,        cy1 = sy;   // çıkış: yatay
+  const cx2 = tx,                    cy2 = sy;   // varış: tx ile aynı X → panele dik
   const coords = [];
   for(let i = 0; i <= steps; i++){
     const t = i/steps, mt = 1-t;
