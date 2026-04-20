@@ -44,14 +44,17 @@ button{cursor:pointer;font-family:inherit}
   opacity:.5;
   background:rgba(255,255,255,.65)!important;
 }
-/* MapLibre canvas — sade modda grayscale kaldırıldı, interaktif renkler (kırmızı) görünür */
+/* MapLibre canvas grayscale — Leaflet'teki .leaflet-tile-pane filter'ın karşılığı */
+/* Grayscale tile efekti canvas'a değil tile layer'a uygulanıyor
+   Böylece kırmızı pin/label/çizgiler etkilenmiyor */
 #cE:not(.renkli) #mapE .maplibregl-canvas{
   will-change:transform;
 }
 #cE.renkli #mapE .maplibregl-canvas{
-  filter:grayscale(.3) brightness(.9);
   will-change:transform;
 }
+/* Tile'ları grayscale yapmak için MapLibre style'da raster-saturation kullanılıyor
+   (map.js içinde _isMapReady sonrası setPaintProperty ile) */
 /* Renkli mod zoom kontrolleri */
 #cE.renkli .maplibregl-ctrl-group{border-color:#444!important}
 #cE.renkli .maplibregl-ctrl-group button{
@@ -328,9 +331,86 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 .e-counts{font-size:13px;color:#bbb;font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0;padding:0 14px;border-left:1px solid #e8e8e8;line-height:1.6;text-align:right}
 
 /* ── Theme toggle ── */
-.e-theme-toggle{margin-left:auto;display:flex;align-items:center;gap:0;border:1.5px solid #e0e0e0;border-radius:3px;overflow:hidden;flex-shrink:0}
+.e-theme-toggle{display:flex;align-items:center;gap:0;border:1.5px solid #e0e0e0;border-radius:3px;overflow:hidden;flex-shrink:0}
 .e-theme-toggle button{padding:5px 12px;font-size:9px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:1px;background:transparent;border:none;cursor:pointer;color:#aaa;transition:all .15s;text-transform:uppercase}
 .e-theme-toggle button.active{background:#1F1F25;color:#fff}
+
+/* ── Info button ── */
+.e-info-btn{
+  width:26px;height:26px;border-radius:50%;
+  border:1.5px solid #ccc;background:#111;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:700;
+  color:#fff;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;margin-left:auto;margin-right:8px;
+}
+.e-info-btn:hover{background:#f03010;border-color:#f03010}
+
+/* ── Info Modal ── */
+.e-info-modal{
+  position:fixed;inset:0;z-index:1200;
+  background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+  padding:16px;
+}
+.e-info-modal.open{opacity:1;pointer-events:auto}
+.e-info-box{
+  background:#fff;
+  max-width:580px;width:100%;
+  max-height:90vh;
+  display:flex;flex-direction:column;
+  position:relative;
+  border-top:3px solid #f03010;
+  box-shadow:0 8px 40px rgba(0,0,0,.18);
+  transform:translateY(8px);opacity:0;
+  transition:transform .22s,opacity .22s;
+}
+.e-info-modal.open .e-info-box{transform:translateY(0);opacity:1}
+.e-info-close{
+  position:absolute;top:10px;right:12px;
+  width:28px;height:28px;
+  background:transparent;border:none;cursor:pointer;
+  font-size:18px;color:#aaa;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.e-info-close:hover{color:#111}
+.e-info-content{overflow-y:auto;padding:28px 32px 32px;-webkit-overflow-scrolling:touch}
+.e-info-title{
+  font-family:'Teko',sans-serif;font-size:26px;font-weight:500;
+  letter-spacing:.3px;line-height:1.1;color:#111;margin-bottom:2px;
+}
+.e-info-lead{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:#f03010;margin-bottom:20px;font-family:'DM Mono',monospace;
+}
+.e-info-body p{
+  font-size:12px;line-height:1.7;color:#444;
+  font-family:'DM Mono',monospace;margin-bottom:12px;
+}
+.e-info-body p em{font-style:italic;color:#222}
+.e-info-link{color:#f03010;text-decoration:none;border-bottom:1px solid rgba(240,48,16,.3);}
+.e-info-link:hover{border-bottom-color:#f03010}
+.e-info-section-title{
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:#f03010;font-family:'DM Mono',monospace;
+  margin:20px 0 10px;padding-bottom:6px;
+  border-bottom:1px solid #f0f0f0;
+}
+.e-info-team{display:flex;flex-direction:column;gap:6px}
+.e-info-subhead{
+  font-size:8px;letter-spacing:1.5px;text-transform:uppercase;
+  color:#bbb;font-family:'DM Mono',monospace;
+  margin:12px 0 6px;padding-bottom:5px;
+  border-bottom:1px solid #f0f0f0;
+}
+.e-info-team-row{
+  display:flex;align-items:baseline;gap:10px;
+  font-family:'DM Mono',monospace;
+}
+.e-info-name{font-size:11px;color:#111;white-space:nowrap;flex-shrink:0;font-weight:400}
+.e-info-role{font-size:10px;color:#999;flex:1}
 
 
 
@@ -444,6 +524,8 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 #cE.renkli .e-theme-toggle{border-color:#3a3a45}
 #cE.renkli .e-theme-toggle button{color:#888}
 #cE.renkli .e-theme-toggle button.active{background:#d53000;color:#fff}
+#cE.renkli .e-info-btn{border-color:#3a3a45;background:#222;color:#fff}
+#cE.renkli .e-info-btn:hover{background:#f03010;border-color:#f03010}
 
 #cE.renkli .e-sb{background:#222;border-right:2px solid #383838}
 #cE.renkli .e-sb-h{background:#1c1c1c;color:#F7F7F7;border-bottom:1px solid #222;letter-spacing:4px}
@@ -671,4 +753,183 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
     width: 25%;
     min-width: 200px;
   }
+}
+/* ══════════════════════════════════════
+   LOADING SCREEN
+══════════════════════════════════════ */
+#eLoadingScreen{
+  position:fixed;inset:0;z-index:9998;
+  background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .4s ease;
+}
+#eLoadingScreen.hide{
+  opacity:0;pointer-events:none;
+}
+.els-inner{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  user-select:none;
+}
+.els-logo{
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:4px;
+}
+.els-title{
+  font-family:'Teko',sans-serif;font-size:22px;font-weight:500;
+  letter-spacing:.5px;color:#111;line-height:1;
+}
+.els-bar{
+  width:160px;height:2px;background:#eee;overflow:hidden;border-radius:1px;
+}
+.els-bar-inner{
+  height:100%;width:0%;background:#f03010;border-radius:1px;
+  transition:width .3s ease;
+}
+.els-msg{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;text-transform:uppercase;color:#bbb;
+}
+
+.els-splash{
+  display:flex;flex-direction:column;align-items:center;
+  gap:14px;max-width:400px;width:100%;padding:0 32px;
+  animation:elsFadeIn .4s ease;
+}
+@keyframes elsFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.els-splash-dot{
+  width:12px;height:12px;border-radius:50%;background:#f03010;
+  margin-bottom:4px;
+}
+.els-splash-title{
+  font-family:'Teko',sans-serif;font-size:28px;font-weight:500;
+  letter-spacing:.5px;color:#111;line-height:1;text-align:center;
+}
+.els-splash-sub{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;text-transform:uppercase;color:#f03010;
+  margin-top:-4px;
+}
+.els-splash-desc{
+  font-family:'DM Mono',monospace;font-size:12px;
+  line-height:1.75;color:#666;text-align:center;
+  margin:8px 0 4px;
+}
+.els-splash-btn{
+  margin-top:8px;
+  transition:opacity .3s ease, background .15s;
+  padding:10px 28px;
+  background:#111;color:#fff;
+  border:none;cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:10px;
+  letter-spacing:1.5px;text-transform:uppercase;
+  transition:background .15s;
+}
+.els-splash-btn:hover{background:#f03010}
+
+/* ── Loader bottom bar ── */
+.els-loader{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  width:100%;transition:opacity .3s ease;
+}
+.els-loader-bar{
+  width:200px;height:1.5px;background:#eee;overflow:hidden;
+}
+.els-loader-fill{
+  height:100%;width:0%;background:#f03010;
+  transition:width .4s ease;
+}
+.els-loader-msg{
+  font-family:'DM Mono',monospace;font-size:8px;
+  letter-spacing:2px;text-transform:uppercase;color:#ccc;
+  transition:color .3s;
+}
+.els-loader.done .els-loader-msg{color:#f03010}
+
+/* ── Record button ── */
+.els-rec-btn{
+  position:relative;width:72px;height:72px;
+  background:none;border:none;cursor:default;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-bottom:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.els-rec-btn.ready{
+  cursor:pointer;
+}
+.els-rec-btn.ready:hover .els-rec-dot{
+  transform:scale(1.15);
+  box-shadow:0 0 0 6px rgba(240,48,16,.12);
+}
+.els-rec-ring{
+  position:absolute;inset:0;
+}
+.els-rec-arc{
+  transition:opacity .3s;
+}
+.els-rec-btn.ready .els-rec-arc{
+  animation:none !important;
+  opacity:0;
+}
+.els-rec-dot{
+  width:26px;height:26px;border-radius:50%;
+  background:#f03010;
+  position:relative;z-index:1;
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+/* Outer ring pulse when ready */
+.els-rec-btn.ready::after{
+  content:'';
+  position:absolute;inset:8px;
+  border-radius:50%;
+  border:1.5px solid rgba(240,48,16,.25);
+  animation:elsPulse 1.4s ease infinite;
+}
+@keyframes elsPulse{
+  0%{transform:scale(1);opacity:.6}
+  70%{transform:scale(1.18);opacity:0}
+  100%{transform:scale(1.18);opacity:0}
+}
+/* Keşfet label altında */
+.els-rec-btn.ready + .els-splash-title::before{
+  content:'';
+}
+
+/* ── Cursor hint on record button ── */
+.els-rec-cursor {
+  position: absolute;
+  /* İmleci kırmızı noktanın sağ alt köşesine tam oturacak şekilde pozisyonluyoruz */
+  top: 45px; 
+  left: 48px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease .2s;
+  display: flex;
+  align-items: center;
+  /* İkonun yazının solunda durup noktayı göstermesi için ters çeviriyoruz */
+  flex-direction: row-reverse; 
+  gap: 6px;
+  white-space: nowrap;
+  z-index: 10;
+}
+.els-rec-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #111;
+  white-space: nowrap;
+  background: #fff;
+  padding: 3px 7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  border-radius: 2px;
+  /* Eski kodunuzdaki margin-bottom: 4px dikey hizalamayı bozuyordu, sildik */
+  margin-bottom: 0; 
+}
+.els-rec-btn.ready .els-rec-cursor{
+  opacity:1;
+  animation:elsCursorBob .8s ease-in-out infinite alternate;
+}
+@keyframes elsCursorBob {
+  from { transform: translate(0, 0); }
+  to { transform: translate(3px, 3px); }
 }

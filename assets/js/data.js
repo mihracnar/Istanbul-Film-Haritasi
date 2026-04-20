@@ -96,7 +96,7 @@ async function loadSheetsData() {
           genre: genre,
           year:  parseInt(r[5], 10) || 0,
           locs:  locIds,
-          desc:  '',
+          desc:  (r[7] || '').trim(),
           stills: []
         };
       })
@@ -117,4 +117,54 @@ async function loadSheetsData() {
     setTimeout(eHideLoading, 3000);
     return false;
   }
+}
+
+/* ════════════════════════════════════════════════════════════
+   gorselMap: filmTitle → [{url, mekan}]
+   Seçim Durumu: '1' = önce, '' / '0' = normal, 'x' = gösterme
+   ════════════════════════════════════════════════════════════ */
+let gorselMap = {};
+
+async function loadGorseller() {
+  try {
+    const res  = await fetch(`${SHEETS_BASE}&gid=${GID_GORSELLER}`);
+    const text = await res.text();
+    const rows = parseCSV(text).slice(1); // A=ID B=FilmAdı C=Mekan D=URL E=Durum
+
+    const raw = {};
+    rows.forEach(r => {
+      const url   = (r[3] || '').trim();
+      const durum = (r[4] || '').trim();
+      const title = (r[1] || '').trim().replace(/\s+/g, ' ');
+      const mekan = (r[2] || '').trim();
+      if (!url || !title || durum === 'x') return;
+      if (!raw[title]) raw[title] = { prio: [], normal: [] };
+      const item = { url, mekan };
+      if (durum === '1') raw[title].prio.push(item);
+      else               raw[title].normal.push(item);
+    });
+
+    gorselMap = {};
+    Object.entries(raw).forEach(([title, { prio, normal }]) => {
+      if (prio.length || normal.length)
+        gorselMap[title] = [...prio, ...normal];
+    });
+
+    console.log('gorselMap: ' + Object.keys(gorselMap).length + ' film yüklendi');
+  } catch(e) {
+    console.warn('Görseller yüklenemedi:', e.message);
+  }
+}
+
+function getGorsellerForFilm(filmTitle) {
+  const items = gorselMap[filmTitle] || gorselMap[(filmTitle||'').replace(/\s+/g,' ').trim()];
+  if (!items || !items.length) return null;
+  return {
+    stills:   items.map(i => i.url),
+    poster:   null,
+    backdrop: items[0].url,
+    desc:     '',
+    mekanlar: items.map(i => i.mekan).filter(Boolean),
+    fromGorselSheet: true
+  };
 }

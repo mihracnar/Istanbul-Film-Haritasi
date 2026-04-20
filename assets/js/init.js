@@ -16,32 +16,48 @@ function attachMapRedraw(theme, m){
 }
 
 function eShowLoading(msg){
-  let el = document.getElementById('eLoadingMsg');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'eLoadingMsg';
-    el.style.cssText = [
-      'position:fixed', 'top:50%', 'left:50%',
-      'transform:translate(-50%,-50%)',
-      'background:#fff', 'border:2px solid #000',
-      'padding:20px 32px',
-      "font-family:'DM Mono',monospace",
-      'font-size:13px', 'z-index:9999', 'letter-spacing:1px'
-    ].join(';');
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
+  const screen = document.getElementById('eLoadingScreen');
+  const msgEl  = document.getElementById('elsMsg');
+  if(screen) screen.classList.remove('hide');
+  if(msgEl && msg) msgEl.textContent = msg;
 }
 
 function eHideLoading(){
-  const el = document.getElementById('eLoadingMsg');
-  if(el) el.remove();
+  const bar = document.getElementById('elsBarInner');
+  if(bar) bar.style.width = '100%';
+  // Bar doldu → loader solar, buton aktifleşir + cursor belirir
+  setTimeout(()=>{
+    const loader = document.getElementById('elsLoader');
+    const btn    = document.getElementById('elsRecBtn');
+    if(loader) loader.style.opacity = '0';
+    if(btn){
+      btn.disabled = false;
+      btn.classList.add('ready');
+    }
+  }, 500);
+}
+
+function elsSplashClose(){
+  const s = document.getElementById('eLoadingScreen');
+  if(s){ s.classList.add('hide'); setTimeout(()=>{ if(s.parentNode) s.parentNode.removeChild(s); }, 500); }
+}
+
+// Bar ilerlemesi — yükleme adımlarını yansıt
+function eLoadingProgress(pct, msg){
+  const bar   = document.querySelector('.els-bar-inner');
+  const msgEl = document.getElementById('elsMsg');
+  if(bar)   bar.style.width = pct + '%';
+  if(msgEl && msg) msgEl.textContent = msg;
 }
 
 async function initApp(){
-  eShowLoading('VERİ YÜKLENİYOR...');
+  eShowLoading();
   try {
+    eLoadingProgress(15, 'Filmler ve mekanlar…');
     await loadSheetsData();
+    eLoadingProgress(60, 'Görseller hazırlanıyor…');
+    await loadGorseller();  // Görseller sheet — gorselMap'i doldur
+    eLoadingProgress(90, 'Harita kuruluyor…');
     console.log(`Yüklendi: ${FILMS.length} film, ${LOCS.length} mekan`);
   } catch(e){
     console.error('initApp hata:', e);

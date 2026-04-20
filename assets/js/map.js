@@ -75,28 +75,27 @@ async function openMedia(filmId){
   if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
   if(window._connMoveEnd && maps['E']){ maps['E'].off('moveend',window._connMoveEnd); window._connMoveEnd=null; }
   clearSelLayers(); highlightFilmOnMap('E',filmId);
-  const tmdb=await fetchTMDB(f);
-  if(tmdb){
-    const heroSrc=tmdb.backdrop||tmdb.poster;
+  // Görseller sheet'ten görseller, açıklama Filmler sheet'inden (f.desc)
+  const gorsel = getGorsellerForFilm(f.title);
+  document.getElementById('mpDesc').textContent = f.desc || '—';
+  if(gorsel){
+    const heroSrc = gorsel.backdrop || (gorsel.stills&&gorsel.stills[0]);
     if(heroSrc){ heroEl.src=heroSrc; heroEl.style.opacity='1'; heroEl.style.filter=''; }
-    document.getElementById('mpDesc').textContent=tmdb.desc||'—';
-    const thumbs=document.getElementById('mpThumbs');
-    if(tmdb.stills.length) thumbs.innerHTML=tmdb.stills.map((url,i)=>`<img class="mp-thumb${i===0?' sel':''}" src="${url}" onclick="mpSelectStillUrl('${url}',this,${i})" alt="Sahne ${i+1}">`).join('');
-    else if(tmdb.poster) thumbs.innerHTML=`<img class="mp-thumb sel" src="${tmdb.poster}" onclick="mpSelectStillUrl('${tmdb.poster}',this,0)" alt="Poster">`;
-    if(heroSrc) heroEl.onclick=null;
+    const thumbs = document.getElementById('mpThumbs');
+    thumbs.innerHTML = gorsel.stills.map((url,i)=>`<img class="mp-thumb${i===0?' sel':''}" src="${url}" onclick="mpSelectStillUrl('${url}',this,${i})" alt="Sahne ${i+1}">`).join('');
+    if(heroSrc) heroEl.onclick = null;
   } else {
-    heroEl.src=f.stills?.[0]?stillUrl(f.stills[0],640,360):''; heroEl.style.opacity='1';
-    document.getElementById('mpDesc').textContent=f.desc||'—';
-    const th=document.getElementById('mpThumbs');
-    th.innerHTML=(f.stills||[]).map((s,i)=>`<img class="mp-thumb${i===0?' sel':''}" src="${stillUrl(s,160,90)}" onclick="mpSelectStill(${i},${f.id})" alt="Sahne ${i+1}">`).join('');
+    heroEl.src = ''; heroEl.style.opacity='0.3';
+    document.getElementById('mpThumbs').innerHTML = '';
   }
 }
 function mpOpenLightbox(startIdx){
   if(!currentFilm) return;
-  const cached=tmdbCache[currentFilm.id];
-  if(cached?.stills?.length){ gLbItems=cached.stills.map(url=>({url,filmTitle:currentFilm.title,year:currentFilm.year})); if(cached.poster&&!gLbItems.find(i=>i.url===cached.poster)) gLbItems.unshift({url:cached.poster,filmTitle:currentFilm.title,year:currentFilm.year}); }
-  else if(cached?.poster) gLbItems=[{url:cached.poster,filmTitle:currentFilm.title,year:currentFilm.year}];
-  else gLbItems=(currentFilm.stills||[]).map(seed=>({seed,filmTitle:currentFilm.title,year:currentFilm.year}));
+  // Yalnızca Görseller sheet (TMDB fallback yok)
+  const gorselLb = getGorsellerForFilm(currentFilm.title);
+  gLbItems = gorselLb?.stills?.length
+    ? gorselLb.stills.map(url=>({url,filmTitle:currentFilm.title,year:currentFilm.year,filmId:currentFilm.id}))
+    : [];
   gLbCur=startIdx??0; gLbShow(); document.getElementById('gLightbox').classList.add('open'); document.addEventListener('keydown',gLbKey);
 }
 function mpSelectStillUrl(url,imgEl,idx){ document.getElementById('mpHero').src=url; document.querySelectorAll('.mp-thumb').forEach(el=>el.classList.remove('sel')); if(imgEl) imgEl.classList.add('sel'); mpOpenLightbox(idx??0); }
@@ -129,9 +128,18 @@ async function fillLocGallery(locId,theme){
   const loc=LOC_MAP[locId]; if(!loc) return;
   const scrollEl=document.getElementById('locGalleryScroll-'+theme); if(!scrollEl) return;
   const films=loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean);
-  const tmdbResults=await Promise.all(films.map(f=>fetchTMDB(f)));
-  gLbItems=[];
-  const itemsHTML=films.flatMap((f,fi)=>{ const tmdb=tmdbResults[fi]; const imgs=tmdb?.stills?.length?tmdb.stills:tmdb?.poster?[tmdb.poster]:[]; if(!imgs.length) return []; return imgs.map(url=>{ const idx=gLbItems.length; gLbItems.push({url,filmTitle:f.title,year:f.year,filmId:f.id}); return `<div class="loc-gallery-item" onclick="openGLb(${idx})"><img src="${url}" loading="lazy" alt="${f.title}"><div class="loc-gallery-caption">${f.title}</div></div>`; }); }).join('');
+  // Yalnızca Görseller sheet (TMDB fallback yok)
+  gLbItems = [];
+  const itemsHTML = films.flatMap(f => {
+    const gorsel = getGorsellerForFilm(f.title);
+    const urls = gorsel?.stills?.length ? gorsel.stills : [];
+    if(!urls.length) return [];
+    return urls.map(url => {
+      const idx = gLbItems.length;
+      gLbItems.push({url, filmTitle:f.title, year:f.year, filmId:f.id});
+      return `<div class="loc-gallery-item" onclick="openGLb(${idx})"><img src="${url}" loading="lazy" alt="${f.title}"><div class="loc-gallery-caption">${f.title}</div></div>`;
+    });
+  }).join('');
   scrollEl.innerHTML=itemsHTML;
   const countEl=scrollEl.closest('.loc-gallery-bar,[id^="e"],[id^="a"],[id^="b"],[id^="d"]')?.querySelector('.loc-gallery-count');
   if(countEl) countEl.textContent=gLbItems.length+' görsel';
@@ -583,3 +591,16 @@ function liveUpdateConn(theme){
     }
   });
 })();
+/* ══════════════════════════════════════
+   INFO MODAL
+══════════════════════════════════════ */
+function eInfoOpen(){
+  document.getElementById('eInfoModal').classList.add('open');
+}
+function eInfoClose(e){
+  if(e && e.target !== document.getElementById('eInfoModal') && !e.target.classList.contains('e-info-close')) return;
+  document.getElementById('eInfoModal').classList.remove('open');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') document.getElementById('eInfoModal')?.classList.remove('open');
+});
