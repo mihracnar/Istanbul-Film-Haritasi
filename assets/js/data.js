@@ -123,6 +123,16 @@ async function loadSheetsData() {
    gorselMap: filmTitle → [{url, mekan}]
    Seçim Durumu: '1' = önce, '' / '0' = normal, 'x' = gösterme
    ════════════════════════════════════════════════════════════ */
+
+// Google Drive paylaşım linkini görüntülenebilir img URL'e dönüştür
+function driveToImgUrl(url) {
+  if (!url) return url;
+  if (url.includes('lh3.google')) return url;
+  var m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+  return url;
+}
+
 let gorselMap = {};
 
 async function loadGorseller() {
@@ -133,7 +143,7 @@ async function loadGorseller() {
 
     const raw = {};
     rows.forEach(r => {
-      const url   = (r[3] || '').trim();
+      const url   = driveToImgUrl((r[3] || '').trim());
       const durum = (r[4] || '').trim();
       const title = (r[1] || '').trim().replace(/\s+/g, ' ');
       const mekan = (r[2] || '').trim();
