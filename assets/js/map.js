@@ -56,6 +56,12 @@ async function openMedia(filmId){
   document.getElementById('mpDesc').textContent='Yükleniyor...';
   document.getElementById('mpThumbs').innerHTML='';
   const filmLocs = LOCS.filter(l=>f.locs.includes(l.id));
+  // Tanı: f.locs'da olup LOCS'ta olmayan id var mı? (olmaması gerek; data.js cleanup yapıyor)
+  if (filmLocs.length !== f.locs.length) {
+    const missing = f.locs.filter(id => !LOCS.some(l => l.id === id));
+    console.warn(`[map] F${f.id} "${f.title}" — ${missing.length} loc id LOCS'ta yok:`, missing);
+  }
+  if (window.DEBUG_CLICK) console.log(`[map] openMedia F${f.id} "${f.title}" → ${filmLocs.length} chip`);
   document.getElementById('mpLocs').innerHTML = filmLocs.map(l=>
     `<button class="mp-loc-chip" onclick="mpGoLoc(${l.id})">${l.name}</button>`).join('');
   document.getElementById('mp').classList.add('open');
@@ -100,8 +106,20 @@ function mpOpenLightbox(startIdx){
 }
 function mpSelectStillUrl(url,imgEl,idx){ document.getElementById('mpHero').src=url; document.querySelectorAll('.mp-thumb').forEach(el=>el.classList.remove('sel')); if(imgEl) imgEl.classList.add('sel'); mpOpenLightbox(idx??0); }
 function mpSelectStill(idx,filmId){ const f=FILM_MAP[filmId]; document.getElementById('mpHero').src=stillUrl(f.stills[idx],640,360); document.querySelectorAll('.mp-thumb').forEach((el,i)=>el.classList.toggle('sel',i===idx)); }
-function mpGoLoc(locId){ const loc=LOC_MAP[locId]; if(!loc) return; if(window.innerWidth<=640){ _mPrevSheet=null; closeMedia(); eSelectLoc(locId); if(window.mSetTab) window.mSetTab('harita',document.getElementById('mTabHarita')); } else { maps['E']?.flyTo({center:[loc.lng,loc.lat],zoom:15,duration:500}); } }
+function mpGoLoc(locId){
+  const loc=LOC_MAP[locId];
+  if(!loc) { console.warn(`[map] mpGoLoc: M${locId} LOC_MAP'te yok`); return; }
+  if (window.DEBUG_CLICK) console.log(`[map] mpGoLoc M${locId} "${loc.name}"`);
+  if(window.innerWidth<=640){
+    _mPrevSheet=null; closeMedia(); eSelectLoc(locId);
+    if(window.mSetTab) window.mSetTab('harita',document.getElementById('mTabHarita'));
+  } else {
+    if (window.DEBUG_FLY) console.log(`[map] flyTo M${locId} z=15`);
+    maps['E']?.flyTo({center:[loc.lng,loc.lat],zoom:15,duration:500});
+  }
+}
 function closeMedia(){
+  if (window.DEBUG_CLICK) console.log(`[ui] closeMedia${currentFilm ? ` (was F${currentFilm.id})` : ''}`);
   document.getElementById('mp').classList.remove('open');
   const fp=document.querySelector('#cE .e-fp'); if(fp) fp.style.visibility='';
   if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
@@ -184,11 +202,13 @@ function createMap(id, theme){
   maps[theme] = m;
 
   m.on('load', () => {
+    const _t = performance.now();
     _setupEMapSources(m);
     _setupEMapLayers(m);
     _setupEMapEvents(m, theme);
     attachMapRedraw(theme, m);
     inited.E = true;
+    console.log(`[map] hazır — ${LOCS.length} pin (${(performance.now()-_t).toFixed(0)}ms setup)`);
   });
 
   m.on('error', e => console.warn('MapLibre hata:', e.error?.message || e));
@@ -308,13 +328,19 @@ function _setupEMapEvents(m, theme){
     m.on('click', layer, e => {
       if(_wasDragged()) return;
       e.preventDefault();
-      selectLoc(theme, e.features[0].properties.id);
+      const id = e.features[0].properties.id;
+      if (window.DEBUG_CLICK) {
+        const loc = LOC_MAP[id];
+        console.log(`[map] pin tıklandı (${layer}) M${id} ${loc ? `"${loc.name}"` : '(LOC_MAP\'te yok!)'}`);
+      }
+      selectLoc(theme, id);
     });
     m.on('mouseenter', layer, () => { m.getCanvas().style.cursor = 'pointer'; });
     m.on('mouseleave', layer, () => { m.getCanvas().style.cursor = ''; });
   });
 
   m.on('dblclick', e => {
+    if (window.DEBUG_CLICK) console.log('[map] dblclick — sıfırla');
     // Timer + conn çizgileri HEMEN temizle
     if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
     clearConnLines();  // ← önce çizgileri sil
@@ -403,6 +429,20 @@ function eFilterMapMarkers(){
     return catOk && filmOk;
   });
 
+  if (window.DEBUG_FILTER) {
+    const fs = [];
+    if (eActiveGenre)   fs.push(`tür="${eActiveGenre}"`);
+    if (eActiveDir)     fs.push(`yön="${eActiveDir}"`);
+    if (eActiveDecade)  fs.push(`onyıl=${eActiveDecade}`);
+    if (eActiveLocCat)  fs.push(`mekan="${eActiveLocCat}"`);
+    const filterStr = fs.length ? fs.join(' ') : 'YOK';
+    console.log(`[filtre] ${filterStr} → ${filteredFilms.length} film, ${visibleLocs.length} pin`);
+    if (filteredFilms.length === 0) console.warn(`[filtre] sıfır film sonucu — ${filterStr}`);
+    if (visibleLocs.length === 0 && filteredFilms.length > 0) {
+      console.warn(`[filtre] film var ama görünür pin yok — kategori filtresi engelliyor olabilir`);
+    }
+  }
+
   const visibleIds = visibleLocs.map(l => l.id);
   const f = visibleIds.length < LOCS.length ? ['in', ['get', 'id'], ['literal', visibleIds]] : null;
   // vis filter güncelle → label layerlar _refreshLabelFilters ile senkronize
@@ -423,13 +463,16 @@ function eFilterMapMarkers(){
     const hasFilter = eActiveLocCat || eActiveDir || eActiveGenre || eActiveDecade;
     if(hasFilter && visibleLocs.length){
       if(visibleLocs.length === 1){
+        if (window.DEBUG_FLY) console.log(`[map] flyTo (filtre tek pin) M${visibleLocs[0].id}`);
         m.flyTo({ center:[visibleLocs[0].lng, visibleLocs[0].lat], zoom:14, duration:800 });
       } else {
+        if (window.DEBUG_FLY) console.log(`[map] fitBounds (filtre) ${visibleLocs.length} pin`);
         const bounds = new maplibregl.LngLatBounds();
         visibleLocs.forEach(l => bounds.extend([l.lng, l.lat]));
         m.fitBounds(bounds, { padding:60, maxZoom:15, duration:800 });
       }
     } else if(!hasFilter){
+      if (window.DEBUG_FLY) console.log('[map] flyTo (filtre yok) IST_CENTER');
       m.flyTo({ center: IST_CENTER, zoom:12, duration:800 });
     }
   }
@@ -604,3 +647,65 @@ function eInfoClose(e){
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape') document.getElementById('eInfoModal')?.classList.remove('open');
 });
+
+/* ════════════════════════════════════════════════════════════
+   window.debug.map — harita durumu sorguları
+   ════════════════════════════════════════════════════════════ */
+window.debug = window.debug || {};
+window.debug.map = {
+
+  state() {
+    const m = maps['E'];
+    const ready = m && inited.E;
+    const c = m ? m.getCenter() : null;
+    console.group('[map] state');
+    console.log('hazır:', ready);
+    if (m) {
+      console.log('zoom:', m.getZoom().toFixed(2));
+      console.log('merkez:', c ? `[${c.lng.toFixed(4)}, ${c.lat.toFixed(4)}]` : null);
+    }
+    console.log('eActiveLoc:', eActiveLoc);
+    console.log('seçili pinler:', [..._selPinIds]);
+    console.log('aktif bağlantı:', activeConns.E?.locId || null);
+    console.log('film paneli açık:', document.getElementById('mp')?.classList.contains('open'));
+    console.log('currentFilm:', currentFilm ? `F${currentFilm.id} "${currentFilm.title}"` : null);
+    console.groupEnd();
+  },
+
+  filters() {
+    console.group('[map] aktif filtreler');
+    console.log('eActiveGenre:',  eActiveGenre  || '(yok)');
+    console.log('eActiveDir:',    eActiveDir    || '(yok)');
+    console.log('eActiveDecade:', eActiveDecade || '(yok)');
+    console.log('eActiveLocCat:', eActiveLocCat || '(yok)');
+    console.groupEnd();
+  },
+
+  filteredFilms() {
+    const filtered = FILMS.filter(f =>
+      (!eActiveGenre  || f.genre === eActiveGenre)  &&
+      (!eActiveDir    || f.dir   === eActiveDir)    &&
+      (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade)
+    );
+    console.log(`${filtered.length} film (filtre sonrası):`,
+      filtered.slice(0, 30).map(f => `F${f.id} "${f.title}" (${f.year})`),
+      filtered.length > 30 ? '...' : '');
+    return filtered;
+  },
+
+  visiblePins() {
+    const filteredFilms = FILMS.filter(f =>
+      (!eActiveGenre  || f.genre === eActiveGenre)  &&
+      (!eActiveDir    || f.dir   === eActiveDir)    &&
+      (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade)
+    );
+    const filteredLocIds = new Set(filteredFilms.flatMap(f => f.locs));
+    const visible = LOCS.filter(loc =>
+      (!eActiveLocCat || loc.cat === eActiveLocCat) && filteredLocIds.has(loc.id)
+    );
+    console.log(`${visible.length}/${LOCS.length} pin görünür:`,
+      visible.slice(0, 30).map(l => `M${l.id} "${l.name}"`),
+      visible.length > 30 ? '...' : '');
+    return visible;
+  }
+};

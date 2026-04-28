@@ -61,6 +61,8 @@ function eRenderFilms(films){
 
 function eToggleDecade(d){
   const key = String(d);
+  const willOpen = !eOpenDecades.has(key);
+  if (window.DEBUG_CLICK) console.log(`[ui] eToggleDecade ${d} → ${willOpen ? 'aç' : 'kapat'}`);
   if(eOpenDecades.has(key)) eOpenDecades.delete(key);
   else eOpenDecades.add(key);
   const grp = document.querySelector('.e-decade-group[data-decade="'+d+'"]');
@@ -106,6 +108,13 @@ function eApplyFilters(){
     (!eActiveDir    || f.dir===eActiveDir)     &&
     (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
   );
+  if (window.DEBUG_FILTER) {
+    const fs = [];
+    if (eActiveGenre)  fs.push(`tür="${eActiveGenre}"`);
+    if (eActiveDir)    fs.push(`yön="${eActiveDir}"`);
+    if (eActiveDecade) fs.push(`onyıl=${eActiveDecade}`);
+    console.log(`[ui] eApplyFilters [${fs.join(' ') || 'yok'}] → ${filtered.length}/${FILMS.length} film`);
+  }
   eRenderFilms(filtered);
   eUpdateCounts();
   const filteredIds = new Set(filtered.map(f=>f.id));
@@ -117,7 +126,9 @@ function eApplyFilters(){
 }
 
 function eSelectLoc(id){
-  const loc = LOC_MAP[id]; if(!loc) return;
+  const loc = LOC_MAP[id];
+  if(!loc) { console.warn(`[ui] eSelectLoc: M${id} LOC_MAP'te yok`); return; }
+  if (window.DEBUG_CLICK) console.log(`[ui] eSelectLoc M${id} "${loc.name}" — ${loc.films.length} film`);
 
   // Yönetmen filtresi aktifse kaldır
   if(eActiveDir){

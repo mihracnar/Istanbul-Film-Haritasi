@@ -67,6 +67,7 @@ function eSyncFilterHeights(){
 
 
 function eSetGenre(g, btn){
+  if (window.DEBUG_CLICK) console.log(`[ui] eSetGenre "${g}"`);
   eActiveGenre = g;
   document.querySelectorAll('.e-genre-chip-inner').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -75,6 +76,7 @@ function eSetGenre(g, btn){
 }
 
 function eSetDecade(d, btn){
+  if (window.DEBUG_CLICK) console.log(`[ui] eSetDecade ${d || '(TÜMÜ)'}`);
   eActiveDecade = d;
   document.querySelectorAll('.e-decade-seg').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -190,6 +192,11 @@ function eSearchType(val) {
 function eSearchSelect(idx){
   const item = eSearchItems[idx];
   if(!item) return;
+  if (window.DEBUG_CLICK) {
+    if (item.type === 'film')      console.log(`[ui] eSearchSelect FİLM F${item.id}`);
+    else if (item.type === 'loc')  console.log(`[ui] eSearchSelect MEKAN M${item.id}`);
+    else if (item.type === 'dir')  console.log(`[ui] eSearchSelect YÖNETMEN "${item.dir}"`);
+  }
   document.getElementById('eSearchInput').value = '';
   document.getElementById('eSearchClear').classList.remove('on');
   document.getElementById('eSearchDrop').classList.remove('open');
@@ -245,6 +252,7 @@ function eSearchFocusSet(items){
 }
 
 function eSearchClear(){
+  if (window.DEBUG_CLICK) console.log('[ui] eSearchClear');
   document.getElementById('eSearchInput').value = '';
   document.getElementById('eSearchClear').classList.remove('on');
   document.getElementById('eSearchDrop').classList.remove('open');
@@ -266,6 +274,7 @@ document.addEventListener('click', e=>{
 });
 
 function eSetLocCat(c, btn){
+  if (window.DEBUG_CLICK) console.log(`[ui] eSetLocCat "${c || '(TÜMÜ)'}"`);
   eActiveLocCat = c;
   document.querySelectorAll('.e-loc-cat-chip').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -274,6 +283,7 @@ function eSetLocCat(c, btn){
 }
 
 function eSetTheme(mode){
+  if (window.DEBUG_CLICK) console.log(`[ui] eSetTheme "${mode}"`);
   const cE = document.getElementById('cE');
   const mp = document.getElementById('mp');
   const btnS = document.getElementById('eBtnSade');
