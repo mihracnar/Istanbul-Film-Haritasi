@@ -227,9 +227,20 @@ async function loadSheetsData() {
     });
 
     const _locsBefore = LOCS.length;
+    const _locsDropped = LOCS.filter(l => !(l.films.length > 0 && l.cat && l.cat.trim() !== ''));
     LOCS = LOCS.filter(l => l.films.length > 0 && l.cat && l.cat.trim() !== '');
-    if (LOCS.length !== _locsBefore) {
-      console.log(`[veri] ${_locsBefore - LOCS.length} mekan elendi (film yok veya geçersiz kategori)`);
+    if (_locsDropped.length) {
+      const noFilm  = _locsDropped.filter(l => l.films.length === 0);
+      const noCat   = _locsDropped.filter(l => l.films.length > 0 && (!l.cat || l.cat.trim() === ''));
+      console.log(`[veri] ${_locsDropped.length} mekan elendi (film yok veya geçersiz kategori)`);
+      if (noFilm.length) {
+        console.log(`  ↳ ${noFilm.length} film yok:`,
+          noFilm.map(l => `M${l.id} "${l.name}" [${l.cat || '(boş)'}]`));
+      }
+      if (noCat.length) {
+        console.log(`  ↳ ${noCat.length} kategori boş:`,
+          noCat.map(l => `M${l.id} "${l.name}" (${l.films.length} film)`));
+      }
     }
 
     const _validLocIds = new Set(LOCS.map(l => l.id));
