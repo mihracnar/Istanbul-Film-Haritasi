@@ -112,7 +112,7 @@ const KatkiModal = (() => {
 <div id="katki-overlay" role="dialog" aria-modal="true" aria-label="Katkı Formu">
   <div id="katki-modal">
     <div class="km-baslik">
-      <h2>Katkı Yap</h2>
+      <h2>Katkıda Bulun</h2>
       <button class="km-kapat" id="katki-kapat-btn" aria-label="Kapat">×</button>
     </div>
     <div class="km-icerik" id="katki-icerik"></div>
