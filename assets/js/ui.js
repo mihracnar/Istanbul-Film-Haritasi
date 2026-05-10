@@ -3,6 +3,7 @@
    Değişiklikler:
    - eSelectLoc: setView → flyTo (MapLibre)
    - ePinsResetAll çağrısı güncellendi (artık argüman almıyor)
+   - eActiveLoc filtre kesişimi + eLocBadge eklendi
    ════════════════════════════════════════════════════════════ */
 
 function eRenderLocs(){
@@ -93,36 +94,54 @@ function eOpenDecadesForFilms(filmIds){
 }
 
 function eUpdateCounts(){
-  const visible = FILMS.filter(f=>
-    (!eActiveGenre  || f.genre===eActiveGenre) &&
-    (!eActiveDir    || f.dir===eActiveDir)     &&
-    (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
-  );
   document.getElementById('eCountsEl').innerHTML =
-    `${visible.length} film<br>${LOCS.length} mekan`;
+    `${FILMS.length} film<br>${LOCS.length} mekan`;
 }
 
 function eApplyFilters(){
   const filtered = FILMS.filter(f=>
     (!eActiveGenre  || f.genre===eActiveGenre) &&
     (!eActiveDir    || f.dir===eActiveDir)     &&
-    (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade)
+    (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade) &&
+    (!eActiveLoc    || LOC_MAP[eActiveLoc]?.films.includes(f.id))
   );
   if (window.DEBUG_FILTER) {
     const fs = [];
     if (eActiveGenre)  fs.push(`tür="${eActiveGenre}"`);
     if (eActiveDir)    fs.push(`yön="${eActiveDir}"`);
     if (eActiveDecade) fs.push(`onyıl=${eActiveDecade}`);
+    if (eActiveLoc)    fs.push(`mekan=M${eActiveLoc}`);
     console.log(`[ui] eApplyFilters [${fs.join(' ') || 'yok'}] → ${filtered.length}/${FILMS.length} film`);
   }
   eRenderFilms(filtered);
   eUpdateCounts();
   const filteredIds = new Set(filtered.map(f=>f.id));
   LOCS.forEach(loc=>{
-    const has = loc.films.some(fid=>filteredIds.has(fid));
     const el = document.getElementById('eLoc'+loc.id);
-    if(el) el.style.opacity = has ? '1' : '0.28';
+    if(!el) return;
+    // Mekan seçiliyken diğer mekanları silme — sadece filtre varken sil
+    if(eActiveLoc){
+      el.style.opacity = '1';
+    } else {
+      const has = loc.films.some(fid=>filteredIds.has(fid));
+      el.style.opacity = has ? '1' : '0.28';
+    }
   });
+}
+
+/* ── Mekan badge temizle ── */
+function eLocBadgeClear(){
+  eActiveLoc = null;
+  const badge = document.getElementById('eLocBadge');
+  if(badge) badge.style.display = 'none';
+  ePinsResetAll();
+  clearSelLayers();
+  clearConnLines();
+  document.querySelectorAll('#cE .e-loc-row').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('#cE .e-film-row').forEach(el=>el.classList.remove('on'));
+  const bar = document.getElementById('eLocBar');
+  if(bar){ bar.style.display='none'; bar.innerHTML=''; }
+  eApplyFilters();
 }
 
 function eSelectLoc(id){
@@ -135,8 +154,6 @@ function eSelectLoc(id){
     eActiveDir = '';
     const badge = document.getElementById('eDirBadge');
     if(badge) badge.style.display = 'none';
-    eApplyFilters();
-    eFilterMapMarkers();
   }
 
   document.querySelectorAll('#cE .e-loc-row').forEach(el=>el.classList.remove('on'));
@@ -148,15 +165,6 @@ function eSelectLoc(id){
   document.querySelectorAll('.e-decade-body').forEach(el=>el.className='e-decade-body closed');
   document.querySelectorAll('.e-decade-hdr-arr').forEach(el=>el.className='e-decade-hdr-arr');
   eOpenDecadesForFilms(loc.films);
-
-  // Film satırlarını seç
-  document.querySelectorAll('#cE .e-film-row').forEach(el=>el.classList.remove('on'));
-  loc.films.forEach(fid=>{
-    const fe = document.getElementById('eFilm'+fid);
-    if(fe) fe.classList.add('on');
-  });
-  const first = document.getElementById('eFilm'+loc.films[0]);
-  if(first) first.scrollIntoView({block:'nearest'});
 
   // Media panel açıksa kapat
   clearHighlights();
@@ -174,6 +182,28 @@ function eSelectLoc(id){
   eActiveLoc = id;
   ePinHighlight(id, true);
 
+  // Mekan badge göster
+  const locBadge = document.getElementById('eLocBadge');
+  const locBadgeLbl = document.getElementById('eLocBadgeLbl');
+  if(locBadge && locBadgeLbl){
+    locBadgeLbl.textContent = loc.name;
+    locBadge.style.display = 'flex';
+  }
+
+  // Film panelini mekan + aktif filtreler kesişimiyle güncelle
+  eApplyFilters();
+
+  // Film satırlarını seç (render sonrası)
+  setTimeout(()=>{
+    document.querySelectorAll('#cE .e-film-row').forEach(el=>el.classList.remove('on'));
+    loc.films.forEach(fid=>{
+      const fe = document.getElementById('eFilm'+fid);
+      if(fe) fe.classList.add('on');
+    });
+    const first = document.getElementById('eFilm'+loc.films[0]);
+    if(first) first.scrollIntoView({block:'nearest'});
+  }, 0);
+
   // Galeri bar
   const bar = document.getElementById('eLocBar');
   bar.classList.add('loc-gallery-bar');
@@ -181,8 +211,6 @@ function eSelectLoc(id){
   bar.style.display = 'flex';
   bar.style.flexDirection = 'column';
   fillLocGallery(loc.id, 'E');
-  // eLocBar açılınca harita konteyneri küçülür — MapLibre'ye haber ver
-
 
   // Haritaya uç — MapLibre flyTo ([lng, lat] sırası!)
   if(maps.E){

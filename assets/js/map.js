@@ -56,7 +56,6 @@ async function openMedia(filmId){
   document.getElementById('mpDesc').textContent='Yükleniyor...';
   document.getElementById('mpThumbs').innerHTML='';
   const filmLocs = LOCS.filter(l=>f.locs.includes(l.id));
-  // Tanı: f.locs'da olup LOCS'ta olmayan id var mı? (olmaması gerek; data.js cleanup yapıyor)
   if (filmLocs.length !== f.locs.length) {
     const missing = f.locs.filter(id => !LOCS.some(l => l.id === id));
     console.warn(`[map] F${f.id} "${f.title}" — ${missing.length} loc id LOCS'ta yok:`, missing);
@@ -81,7 +80,6 @@ async function openMedia(filmId){
   if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
   if(window._connMoveEnd && maps['E']){ maps['E'].off('moveend',window._connMoveEnd); window._connMoveEnd=null; }
   clearSelLayers(); highlightFilmOnMap('E',filmId);
-  // Görseller sheet'ten görseller, açıklama Filmler sheet'inden (f.desc)
   const gorsel = getGorsellerForFilm(f.title);
   document.getElementById('mpDesc').textContent = f.desc || '—';
   if(gorsel){
@@ -97,7 +95,6 @@ async function openMedia(filmId){
 }
 function mpOpenLightbox(startIdx){
   if(!currentFilm) return;
-  // Yalnızca Görseller sheet (TMDB fallback yok)
   const gorselLb = getGorsellerForFilm(currentFilm.title);
   gLbItems = gorselLb?.stills?.length
     ? gorselLb.stills.map(url=>({url,filmTitle:currentFilm.title,year:currentFilm.year,filmId:currentFilm.id}))
@@ -136,17 +133,18 @@ function closeMedia(){
 ══════════════════════════════════════════════ */
 let gLbItems=[]; let gLbCur=0;
 function buildLocGallerySkeleton(loc,theme){
-  const accentLabel={A:'#c8a252',B:'#d42b1e',D:'#c47c1e',E:'#111'}[theme];
+  const isDark = document.getElementById('cE')?.classList.contains('renkli');
+  const accentLabel={A:'#c8a252',B:'#d42b1e',D:'#c47c1e',E: isDark ? '#f03010' : '#111'}[theme];
+  const nameColor = isDark ? '#F7F7F7' : '#111';
   const typeFont=theme==='E'?"font-family:'DM Mono',monospace;font-size:8px;":'';
   const skeletons=loc.films.map(()=>`<div class="loc-gallery-item loc-gallery-skeleton"></div>`).join('');
-  const headHTML=`<span style="font-size:7px;color:${accentLabel};letter-spacing:2px;text-transform:uppercase;${typeFont}">${loc.cat||loc.type}</span><span style="font-size:${theme==='E'?'16':'15'}px;${theme==='D'?'font-style:italic;':''}">${loc.name}</span><span style="font-size:8px;color:#aaa;font-family:'DM Mono',monospace">${loc.ilce}</span><span class="loc-gallery-count" style="font-size:8px;color:${accentLabel};font-family:'DM Mono',monospace;margin-left:4px">…</span><button class="loc-gallery-close" onclick="closeGalleryBar('${theme}')">×</button>`;
+  const headHTML=`<span style="font-size:7px;color:${accentLabel};letter-spacing:2px;text-transform:uppercase;${typeFont}">${loc.cat||loc.type}</span><span style="font-size:${theme==='E'?'16':'15'}px;color:${nameColor};${theme==='D'?'font-style:italic;':''}">${loc.name}</span><span style="font-size:8px;color:#aaa;font-family:'DM Mono',monospace">${loc.ilce}</span><span class="loc-gallery-count" style="font-size:8px;color:${accentLabel};font-family:'DM Mono',monospace;margin-left:4px">…</span><button class="loc-gallery-close" onclick="closeGalleryBar('${theme}')">×</button>`;
   return `<div class="loc-gallery-head">${headHTML}</div><div class="loc-gallery-scroll" id="locGalleryScroll-${theme}">${skeletons}</div>`;
 }
 async function fillLocGallery(locId,theme){
   const loc=LOC_MAP[locId]; if(!loc) return;
   const scrollEl=document.getElementById('locGalleryScroll-'+theme); if(!scrollEl) return;
   const films=loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean);
-  // Yalnızca Görseller sheet (TMDB fallback yok)
   gLbItems = [];
   const itemsHTML = films.flatMap(f => {
     const gorsel = getGorsellerForFilm(f.title);
@@ -162,7 +160,23 @@ async function fillLocGallery(locId,theme){
   const countEl=scrollEl.closest('.loc-gallery-bar,[id^="e"],[id^="a"],[id^="b"],[id^="d"]')?.querySelector('.loc-gallery-count');
   if(countEl) countEl.textContent=gLbItems.length+' görsel';
 }
-function closeGalleryBar(theme){ const bars={A:'aIP',B:'bLocBar',D:'dIP',E:'eLocBar'}; const el=document.getElementById(bars[theme]); if(el) el.style.display='none'; if(theme==='E') requestAnimationFrame(()=>maps.E?.resize()); clearSelLayers(); clearConnLines(); document.querySelectorAll(`#c${theme} .fl,#c${theme} .rp-film,#c${theme} .o-fl,#c${theme} .e-film-row`).forEach(e=>e.classList.remove('on')); }
+
+function closeGalleryBar(theme){
+  const bars={A:'aIP',B:'bLocBar',D:'dIP',E:'eLocBar'};
+  const el=document.getElementById(bars[theme]);
+  if(el) el.style.display='none';
+  if(theme==='E') requestAnimationFrame(()=>maps.E?.resize());
+  clearSelLayers();
+  clearConnLines();
+  document.querySelectorAll(`#c${theme} .fl,#c${theme} .rp-film,#c${theme} .o-fl,#c${theme} .e-film-row`).forEach(e=>e.classList.remove('on'));
+  // Mekan filtresini temizle
+  eActiveLoc = null;
+  const lb = document.getElementById('eLocBadge');
+  if(lb) lb.style.display = 'none';
+  eRenderFilms();
+  eUpdateCounts();
+}
+
 function openGLb(idx){ gLbCur=idx; gLbShow(); document.getElementById('gLightbox').classList.add('open'); document.addEventListener('keydown',gLbKey); }
 function closeGLb(){ document.getElementById('gLightbox').classList.remove('open'); document.removeEventListener('keydown',gLbKey); }
 function gLbClose(e){ if(e.target===document.getElementById('gLightbox')) closeGLb(); }
@@ -171,7 +185,12 @@ function gLbShow(){ const item=gLbItems[gLbCur]; if(!item) return; document.getE
 function gLbKey(e){ if(e.key==='ArrowRight') gLbNav(1); if(e.key==='ArrowLeft') gLbNav(-1); if(e.key==='Escape') closeGLb(); }
 
 function selectLoc(theme,id){
-  if(theme==='E'){ eSelectLoc(id); if(window.innerWidth<=640&&window.mSetTab){ const loc=LOC_MAP[id]; if(loc){ const locFilms=loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean); eRenderFilms(locFilms); } window.mSetTab('filmler',document.getElementById('mTabFilmler')); } }
+  if(theme==='E'){
+    eSelectLoc(id);
+    if(window.innerWidth<=640&&window.mSetTab){
+      window.mSetTab('filmler',document.getElementById('mTabFilmler'));
+    }
+  }
 }
 
 
@@ -267,12 +286,10 @@ function _setupEMapLayers(m){
     }
   });
 
-  // 4. Pin label — SDF + ayrı iki layer (siyah + kırmızı seçili)
+  // 4. Pin label
   const _sz = 32, _px = new Uint8Array(_sz*_sz*4).fill(255);
   m.addImage('lbl-bg', { width:_sz, height:_sz, data:_px }, { sdf:true });
 
-  // Paylaşılan layout
-  // Ortak layout değerleri
   const _BASE = {
     'icon-image': 'lbl-bg', 'icon-text-fit': 'both',
     'icon-text-fit-padding': [4, 9, 4, 5],
@@ -281,7 +298,6 @@ function _setupEMapLayers(m){
     'text-anchor': 'bottom', 'text-offset': [0, -0.65], 'text-padding': 3,
   };
 
-  // Siyah label — nokta kırmızı, siyah arka planda görünür
   m.addLayer({
     id: 'locs-labels', type: 'symbol', source: 'locs',
     layout: Object.assign({}, _BASE, {
@@ -303,7 +319,6 @@ function _setupEMapLayers(m){
     }
   });
 
-  // Kırmızı label — seçili pinler, locs-sel source, nokta beyaz (kırmızı üstünde)
   m.addSource('locs-sel', { type:'geojson', data:{type:'FeatureCollection',features:[]} });
   m.addLayer({
     id: 'locs-labels-sel', type: 'symbol', source: 'locs-sel',
@@ -323,6 +338,35 @@ function _setupEMapLayers(m){
 
 }
 
+function _resetAllFilters(m){
+  if (window.DEBUG_CLICK) console.log('[map] boş alan tıklandı — sıfırla');
+  if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
+  clearConnLines();
+  if(document.getElementById('mp').classList.contains('open')) closeMedia();
+  const locBar = document.getElementById('eLocBar');
+  if(locBar) { locBar.style.display='none'; locBar.innerHTML=''; }
+  _currentVisFilter = null;
+  ePinsResetAll();
+  try { m.setFilter('locs-labels', null); m.setFilter('locs-dots', null); } catch(ex){}
+  eOpenDecades.clear();
+  const firstGrp = document.querySelector('.e-decade-group');
+  if(firstGrp){
+    const d = firstGrp.dataset.decade;
+    eOpenDecades.add(String(d));
+    firstGrp.querySelector('.e-decade-hdr-arr').className = 'e-decade-hdr-arr open';
+    firstGrp.querySelector('.e-decade-body').className   = 'e-decade-body open';
+    document.querySelectorAll('.e-decade-group:not(:first-child) .e-decade-hdr-arr').forEach(el => el.className='e-decade-hdr-arr');
+    document.querySelectorAll('.e-decade-group:not(:first-child) .e-decade-body').forEach(el => el.className='e-decade-body closed');
+  }
+  eActiveLoc = null; clearSelLayers();
+  document.querySelectorAll('#cE .e-loc-row,#cE .e-film-row').forEach(el => el.classList.remove('on'));
+  // Mekan badge temizle
+  const lb = document.getElementById('eLocBadge');
+  if(lb) lb.style.display = 'none';
+  eRenderFilms(); eUpdateCounts();
+  m.flyTo({ center: IST_CENTER, zoom: 12, duration: 800 });
+}
+
 function _setupEMapEvents(m, theme){
   ['locs-labels', 'locs-labels-sel', 'locs-dots'].forEach(layer => {
     m.on('click', layer, e => {
@@ -331,7 +375,7 @@ function _setupEMapEvents(m, theme){
       const id = e.features[0].properties.id;
       if (window.DEBUG_CLICK) {
         const loc = LOC_MAP[id];
-        console.log(`[map] pin tıklandı (${layer}) M${id} ${loc ? `"${loc.name}"` : '(LOC_MAP\'te yok!)'}`);
+        console.log(`[map] pin tıklandı (${layer}) M${id} ${loc ? `"${loc.name}"` : "(LOC_MAP'te yok!)"}`);
       }
       selectLoc(theme, id);
     });
@@ -339,31 +383,14 @@ function _setupEMapEvents(m, theme){
     m.on('mouseleave', layer, () => { m.getCanvas().style.cursor = ''; });
   });
 
-  m.on('dblclick', e => {
-    if (window.DEBUG_CLICK) console.log('[map] dblclick — sıfırla');
-    // Timer + conn çizgileri HEMEN temizle
-    if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
-    clearConnLines();  // ← önce çizgileri sil
-    if(document.getElementById('mp').classList.contains('open')) closeMedia();
-    const locBar = document.getElementById('eLocBar');
-    if(locBar) { locBar.style.display='none'; locBar.innerHTML=''; }
-    _currentVisFilter = null;
-    ePinsResetAll();
-    try { m.setFilter('locs-labels', null); m.setFilter('locs-dots', null); } catch(ex){}
-    eOpenDecades.clear();
-    const firstGrp = document.querySelector('.e-decade-group');
-    if(firstGrp){
-      const d = firstGrp.dataset.decade;
-      eOpenDecades.add(String(d));
-      firstGrp.querySelector('.e-decade-hdr-arr').className = 'e-decade-hdr-arr open';
-      firstGrp.querySelector('.e-decade-body').className   = 'e-decade-body open';
-      document.querySelectorAll('.e-decade-group:not(:first-child) .e-decade-hdr-arr').forEach(el => el.className='e-decade-hdr-arr');
-      document.querySelectorAll('.e-decade-group:not(:first-child) .e-decade-body').forEach(el => el.className='e-decade-body closed');
-    }
-    eActiveLoc = null; clearSelLayers();
-    document.querySelectorAll('#cE .e-loc-row,#cE .e-film-row').forEach(el => el.classList.remove('on'));
-    const bar = document.getElementById('eLocBar'); if(bar) bar.style.display = 'none';
-    m.flyTo({ center: IST_CENTER, zoom: 12, duration: 800 });
+  // Tek tıkla boş alana sıfırla (pin tıklamalarını hariç tut)
+  m.on('click', e => {
+    if(_wasDragged()) return;
+    const hit = m.queryRenderedFeatures(e.point, {
+      layers: ['locs-dots', 'locs-labels', 'locs-labels-sel']
+    });
+    if(hit.length > 0) return; // pin tıklandı
+    _resetAllFilters(m);
   });
 }
 
@@ -374,7 +401,6 @@ function _syncSelSource(){
   const m = maps['E']; if(!m || !_isMapReady(m)) return;
   const ids = [..._selPinIds];
 
-  // locs-sel source: sadece seçili pinler (kırmızı layer için)
   const feats = ids.map(id=>{
     const l = LOC_MAP[id]; if(!l) return null;
     return { type:'Feature', id:l.id,
@@ -383,7 +409,6 @@ function _syncSelSource(){
   }).filter(Boolean);
   try { m.getSource('locs-sel').setData({type:'FeatureCollection', features:feats}); } catch(e){}
 
-  // locs-labels: seçili pinleri gizle (kırmızı layer onları gösterecek)
   const visF = _currentVisFilter;
   if(ids.length > 0){
     const notSelF = ['!', ['match',['get','id'], ids, true, false]];
@@ -393,7 +418,6 @@ function _syncSelSource(){
     try { m.setFilter('locs-labels', visF); } catch(e){}
   }
 
-  // locs-dots rengi: feature-state (circle layer'da çalışıyor)
   LOCS.forEach(l=>{
     try { m.setFeatureState({source:'locs',id:l.id},{selected:_selPinIds.has(l.id)}); } catch(e){}
   });
@@ -445,13 +469,10 @@ function eFilterMapMarkers(){
 
   const visibleIds = visibleLocs.map(l => l.id);
   const f = visibleIds.length < LOCS.length ? ['in', ['get', 'id'], ['literal', visibleIds]] : null;
-  // vis filter güncelle → label layerlar _refreshLabelFilters ile senkronize
   _currentVisFilter = (visibleLocs.length < LOCS.length) ? f : null;
   try { m.setFilter('locs-labels', _currentVisFilter); } catch(e){}
   try { m.setFilter('locs-dots',   _currentVisFilter); } catch(e){}
 
-
-  // Sidebar opacity
   const filteredIds = new Set(filteredFilms.map(f => f.id));
   LOCS.forEach(loc => {
     const has = loc.films.some(fid => filteredIds.has(fid));
@@ -519,16 +540,14 @@ function clearSelLayers(){}
 
 /* ══════════════════════════════════════════════
    BAĞLANTI ÇİZGİLERİ — GeoJSON LineLayer
-   Pin konumu: m.project([lng,lat]) → container-relative
-   Film konumu: getBoundingClientRect() → container-relative
-   Bezier screen-space'de hesaplanır, geo'ya unproject edilir
    ══════════════════════════════════════════════ */
 
 function _bezierToGeo(m, sx, sy, tx, ty, steps){
   steps = steps || 20;
   const dx  = tx - sx;
-  const cx1 = sx + dx * 0.5,        cy1 = sy;   // çıkış: yatay
-  const cx2 = tx,                    cy2 = sy;   // varış: tx ile aynı X → panele dik
+  const dy  = ty - sy;
+  const cx1 = sx + dx * 0.2, cy1 = sy + dy * 0.8;  // pinden hemen film satırı yönüne → fan
+  const cx2 = tx - 80,        cy2 = ty;              // uzun yatay yaklaşım → panele dik giriş
   const coords = [];
   for(let i = 0; i <= steps; i++){
     const t = i/steps, mt = 1-t;
@@ -566,7 +585,6 @@ function _updateConnGeo(theme){
 }
 
 function clearConnLines(){
-  // Tüm pending RAF'ları iptal et
   Object.keys(_connRaf).forEach(k=>{
     if(_connRaf[k]){ cancelAnimationFrame(_connRaf[k]); _connRaf[k]=null; }
   });
@@ -622,7 +640,7 @@ function liveUpdateConn(theme){
       if(eActiveLoc){ const locEl=document.getElementById('eLoc'+eActiveLoc); if(locEl){ locEl.scrollIntoView({block:'nearest'}); document.querySelectorAll('#cE .e-loc-row').forEach(el=>el.classList.remove('on')); locEl.classList.add('on'); } }
     } else if(tab === 'filmler'){
       fp?.classList.add('m-open'); sb?.classList.remove('m-open'); backdrop.classList.add('on');
-      if(eActiveLoc){ const loc=LOC_MAP[eActiveLoc]; if(loc){ const locFilms=loc.films.map(fid=>FILM_MAP[fid]).filter(Boolean); eRenderFilms(locFilms); } }
+      if(eActiveLoc) eApplyFilters();
     }
   };
 
@@ -634,9 +652,10 @@ function liveUpdateConn(theme){
     }
   });
 })();
-/* ══════════════════════════════════════
+
+/* ══════════════════════════════════════════════
    INFO MODAL
-══════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function eInfoOpen(){
   document.getElementById('eInfoModal').classList.add('open');
 }
@@ -678,6 +697,7 @@ window.debug.map = {
     console.log('eActiveDir:',    eActiveDir    || '(yok)');
     console.log('eActiveDecade:', eActiveDecade || '(yok)');
     console.log('eActiveLocCat:', eActiveLocCat || '(yok)');
+    console.log('eActiveLoc:',    eActiveLoc    || '(yok)');
     console.groupEnd();
   },
 
@@ -685,7 +705,8 @@ window.debug.map = {
     const filtered = FILMS.filter(f =>
       (!eActiveGenre  || f.genre === eActiveGenre)  &&
       (!eActiveDir    || f.dir   === eActiveDir)    &&
-      (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade)
+      (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade) &&
+      (!eActiveLoc    || LOC_MAP[eActiveLoc]?.films.includes(f.id))
     );
     console.log(`${filtered.length} film (filtre sonrası):`,
       filtered.slice(0, 30).map(f => `F${f.id} "${f.title}" (${f.year})`),

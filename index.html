@@ -90,8 +90,8 @@
           <div class="e-info-team-row"><span class="e-info-name">Selda YILDIRIM BURMA</span><span class="e-info-role">Y. Şehir Plancısı</span></div>
           <div class="e-info-team-row"><span class="e-info-name">Hakan ERDİN</span><span class="e-info-role">Y. Şehir Plancısı</span></div>
           <div class="e-info-team-row"><span class="e-info-name">Dilek ECER</span><span class="e-info-role">Arkeolog</span></div>
-          <div class="e-info-team-row"><span class="e-info-name">Pınar ŞAHİN</span><span class="e-info-role">Sanat Tarihçi</span></div>
-          <div class="e-info-team-row"><span class="e-info-name">Sezin KARCAN KAYA</span><span class="e-info-role">Mimar</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Pınar ŞAHİN</span><span class="e-info-role">Sanat Tarihçisi</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Sezin Karcan KAYA</span><span class="e-info-role">Mimar</span></div>
           <div class="e-info-subhead">Web Harita Tasarım ve Geliştirme</div>
           <div class="e-info-team-row"><span class="e-info-name">Mihraç NAR</span><span class="e-info-role">Şehir Plancısı, CBS Uzmanı</span></div>
         </div>
@@ -125,7 +125,6 @@
         <div class="e-search-drop" id="eSearchDrop"></div>
       </div>
     </div><!-- /map-wrap -->
-    <!-- eLocBar: e-map-col içinde, doğal genişlikte, sidebarlara taşmaz -->
     <div id="eLocBar" class="e-loc-bar" style="display:none"></div>
     </div><!-- /e-map-col -->
 
@@ -136,6 +135,11 @@
         <span class="e-dir-badge-lbl" id="eDirBadgeLbl"></span>
         <button class="e-dir-badge-x" onclick="eSearchClear()">×</button>
       </div>
+      <div class="e-loc-badge" id="eLocBadge" style="display:none">
+        <span class="e-loc-badge-ico">◎</span>
+        <span class="e-loc-badge-lbl" id="eLocBadgeLbl"></span>
+        <button class="e-loc-badge-x" onclick="eLocBadgeClear()">×</button>
+      </div>
       <div class="e-genre-chips-inner" id="eGenreChips">
         <button class="e-genre-chip-inner on" onclick="eSetGenre('',this)">TÜMÜ</button>
       </div>
@@ -144,9 +148,7 @@
     </div>
   </div><!-- /body -->
 
-
-
-  <!-- Media panel: cE içinde, position:absolute cE bazlı -->
+  <!-- Media panel -->
   <div id="mp">
     <div class="mp-top">
       <div class="mp-top-left">
@@ -198,7 +200,7 @@
 
 <div id="infobar">
   <div id="desc">İBB Sinema Ofisi</div>
-  <div class="h">mekan → galeri &nbsp;|&nbsp; film → detay &nbsp;|&nbsp; Esc kapat</div>
+  <div class="h">mekan → galeri &nbsp;|&nbsp; film → detay &nbsp;|&nbsp; haritaya tıkla: sıfırla</div>
 </div>
 
 <!-- GALLERY LIGHTBOX -->

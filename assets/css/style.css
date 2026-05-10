@@ -938,3 +938,124 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
   from { transform: translate(0, 0); }
   to { transform: translate(3px, 3px); }
 }
+/* ── Seçili film satırı — her ekranda kırmızı bold ── */
+#cE .e-film-row.on .e-ft { color: #f03010; }
+#cE.renkli .e-film-row.on .e-ft { color: #f03010; }
+
+/* ══════════════════════════════════════════════
+   DARK MODE (renkli) DÜZELTMELER
+══════════════════════════════════════════════ */
+
+/* Base renk — explicit override'sız elementleri kapsar */
+#cE.renkli { color: #c8c8c8; }
+
+/* Decade bar */
+#cE.renkli .e-decade-seg { color: #888; }
+#cE.renkli .e-decade-seg.on { color: #f0f0f0; font-weight: 700; background: #2a2a2a; }
+#cE.renkli .e-decade-hdr-arr { color: #888; }
+
+/* Chip'ler */
+#cE.renkli .e-loc-cat-chip,
+#cE.renkli .e-genre-chip-inner { color: #888; border-color: #3a3a3a; }
+#cE.renkli .e-loc-cat-chip:hover,
+#cE.renkli .e-genre-chip-inner:hover { color: #f0f0f0; border-color: #888; }
+
+/* Loc gallery head */
+#cE.renkli .loc-gallery-head { color: #F7F7F7; }
+
+/* Search group label */
+#cE.renkli .e-search-group-lbl { color: #999 !important; }
+
+/* Theme toggle */
+#cE.renkli .e-theme-toggle { border-color: #444; }
+#cE.renkli .e-theme-toggle button { color: #999; }
+
+/* ══════════════════════════════════════════════
+   KİOSK — Portrait 4K (1080×1920 CSS px, DPR:2)
+══════════════════════════════════════════════ */
+@media (min-width: 900px) and (min-height: 1600px) {
+
+  #cE .top { height: 140px; padding: 0 48px; gap: 30px; }
+  #eLogoImg { height: 96px !important; }
+  #cE .sw-s { font-size: 32px; letter-spacing: .5px; }
+  #cE .sw-d { width: 16px; height: 16px; }
+  #cE .e-counts { font-size: 22px; line-height: 1.6; }
+
+  #katki-info-grup .e-info-btn,
+  #cE .e-info-btn { width: 66px; height: 66px; font-size: 32px; }
+
+  #cE .e-theme-toggle button { width: 60px; height: 60px; font-size: 28px; }
+
+  #cE .e-sb { width: 18%; min-width: 220px; }
+  #cE .e-sb-h { font-size: 20px; letter-spacing: 4px; padding: 20px 20px 16px; }
+  #cE .e-loc-row { padding: 18px 20px; }
+  #cE .e-loc-name { font-size: 21px; }
+  #cE .e-loc-meta, #cE .e-loc-fc { font-size: 16px; margin-top: 5px; }
+  #cE .e-loc-cat-chip { padding: 10px 16px; font-size: 15px; min-height: 48px; }
+
+  #cE .e-fp { width: 27%; min-width: 260px; }
+  #cE .e-fp-head { font-size: 20px; letter-spacing: 4px; padding: 20px 20px 16px; }
+  #cE .e-film-row { padding: 17px 20px; }
+  #cE .e-ft { font-size: 21px; }
+  #cE .e-fy, #cE .e-fd { font-size: 16px; margin-top: 5px; }
+
+  #cE .e-genre-chip-inner { padding: 10px 16px; font-size: 15px; min-height: 46px; }
+
+  #cE .e-decade-seg { font-size: 16px; padding: 9px 14px; min-height: 44px; }
+  #cE .e-decade-hdr { padding: 17px 20px; font-size: 19px; }
+  #cE .e-decade-hdr-cnt { font-size: 16px; }
+  #cE .e-decade-hdr-lbl { font-size: 19px; }
+
+  #cE .e-search-input { font-size: 22px; height: 64px; padding: 0 20px 0 56px; }
+  #cE .e-search-icon { font-size: 30px; }
+  #cE .e-search-item { padding: 18px 20px; font-size: 20px; }
+  #cE .e-search-item-sub { font-size: 15px; }
+
+  #preview[data-theme="E"] #mp { width: 28%; min-width: 280px; }
+
+  .gl-nav { font-size: 64px; width: 80px; }
+  .gl-close { font-size: 40px; width: 64px; height: 64px; }
+
+  #eLocBar { left: 18%; width: 55%; max-height: 540px; }
+  .loc-gallery-bar { max-height: 540px; }
+  .loc-gallery-item img { width: 400px; height: 240px; }
+  .loc-gallery-head { padding: 18px 22px 14px; }
+  .loc-gallery-head span:nth-child(2) { font-size: 22px !important; }
+  .loc-gallery-caption { font-size: 13px; padding: 7px 10px; }
+  .loc-gallery-close { font-size: 28px; }
+  .loc-gallery-scroll { gap: 12px; padding: 12px 18px 18px; }
+}
+
+/* ── Mekan filtre badge ── */
+#cE .e-loc-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 14px;
+  background: #fff8f7;
+  border-bottom: 2px solid #f03010;
+  flex-shrink: 0;
+}
+#cE .e-loc-badge-ico { font-size: 11px; color: #f03010; }
+#cE .e-loc-badge-lbl {
+  font-size: 9px; font-family: 'DM Mono', monospace;
+  color: #f03010; font-weight: 700; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .5px;
+}
+#cE .e-loc-badge-lbl::before { content: "MEKAN "; opacity: .5; font-size: 8px; }
+#cE .e-loc-badge-x {
+  background: transparent; border: none;
+  color: #f03010; font-size: 14px; cursor: pointer; padding: 0 2px; line-height: 1;
+  opacity: .7;
+}
+#cE .e-loc-badge-x:hover { opacity: 1; }
+
+#cE.renkli .e-loc-badge { background: #1a0e0e; border-bottom-color: #f03010; }
+#cE.renkli .e-loc-badge-lbl,
+#cE.renkli .e-loc-badge-ico,
+#cE.renkli .e-loc-badge-x { color: #f03010; }
+
+@media (min-width: 900px) and (min-height: 1600px) {
+  #cE .e-loc-badge { padding: 10px 18px; gap: 10px; }
+  #cE .e-loc-badge-lbl { font-size: 13px; }
+  #cE .e-loc-badge-x { font-size: 22px; }
+  #cE .e-loc-badge-ico { font-size: 16px; }
+}
