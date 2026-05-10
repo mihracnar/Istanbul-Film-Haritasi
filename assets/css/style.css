@@ -302,7 +302,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 #eLocs{overflow-y:auto;flex:1}
 
 /* ── Mekan kategori filtresi ── */
-#cE .e-loc-cat-chips{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;border-bottom:2px solid #444;flex-shrink:0;align-content:flex-start}
+#cE .e-loc-cat-chips{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;border-bottom:2px solid #444;flex-shrink:0;align-content:flex-start;min-height:unset!important;height:auto!important}
 #cE .e-loc-cat-chip.on{background:#000;border-color:#000;color:#fff;font-weight:700}
 #cE .e-loc-cat-chip.empty{color:#ddd;border-color:#eee;cursor:default;pointer-events:none}
 
