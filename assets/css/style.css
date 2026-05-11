@@ -1016,7 +1016,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
   .gl-nav { font-size: 64px; width: 80px; }
   .gl-close { font-size: 40px; width: 64px; height: 64px; }
 
-  #eLocBar { left: 18%; width: 55%; max-height: 540px; }
+  #eLocBar { left: max(18%, 220px); right: max(27%, 260px); width: auto; max-height: 540px; }
   .loc-gallery-bar { max-height: 540px; }
   .loc-gallery-item img { width: 400px; height: 240px; }
   .loc-gallery-head { padding: 18px 22px 14px; }
