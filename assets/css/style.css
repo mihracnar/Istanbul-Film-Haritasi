@@ -975,41 +975,41 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 ══════════════════════════════════════════════ */
 @media (min-width: 900px) and (min-height: 1600px) {
 
-  #cE .top { height: 140px; padding: 0 48px; gap: 30px; }
-  #eLogoImg { height: 96px !important; }
-  #cE .sw-s { font-size: 32px; letter-spacing: .5px; }
-  #cE .sw-d { width: 16px; height: 16px; }
-  #cE .e-counts { font-size: 22px; line-height: 1.6; }
+  #cE .top { height: 110px; padding: 0 40px; gap: 26px; }
+  #eLogoImg { height: 75px !important; }
+  #cE .sw-s { font-size: 24px; letter-spacing: .5px; }
+  #cE .sw-d { width: 13px; height: 13px; }
+  #cE .e-counts { font-size: 17px; line-height: 1.6; }
 
   #katki-info-grup .e-info-btn,
-  #cE .e-info-btn { width: 66px; height: 66px; font-size: 32px; }
+  #cE .e-info-btn { width: 52px; height: 52px; font-size: 26px; }
 
-  #cE .e-theme-toggle button { width: 60px; height: 60px; font-size: 28px; }
+  #cE .e-theme-toggle button { width: 52px; height: 52px; font-size: 24px; }
 
   #cE .e-sb { width: 18%; min-width: 220px; }
-  #cE .e-sb-h { font-size: 20px; letter-spacing: 4px; padding: 20px 20px 16px; }
-  #cE .e-loc-row { padding: 18px 20px; }
-  #cE .e-loc-name { font-size: 21px; }
-  #cE .e-loc-meta, #cE .e-loc-fc { font-size: 16px; margin-top: 5px; }
-  #cE .e-loc-cat-chip { padding: 10px 16px; font-size: 15px; min-height: 48px; }
+  #cE .e-sb-h { font-size: 16px; letter-spacing: 4px; padding: 16px 16px 12px; }
+  #cE .e-loc-row { padding: 14px 16px; }
+  #cE .e-loc-name { font-size: 16px; }
+  #cE .e-loc-meta, #cE .e-loc-fc { font-size: 13px; margin-top: 3px; }
+  #cE .e-loc-cat-chip { padding: 7px 12px; font-size: 12px; min-height: 40px; }
 
   #cE .e-fp { width: 27%; min-width: 260px; }
-  #cE .e-fp-head { font-size: 20px; letter-spacing: 4px; padding: 20px 20px 16px; }
-  #cE .e-film-row { padding: 17px 20px; }
-  #cE .e-ft { font-size: 21px; }
-  #cE .e-fy, #cE .e-fd { font-size: 16px; margin-top: 5px; }
+  #cE .e-fp-head { font-size: 16px; letter-spacing: 4px; padding: 16px 16px 12px; }
+  #cE .e-film-row { padding: 13px 16px; }
+  #cE .e-ft { font-size: 16px; }
+  #cE .e-fy, #cE .e-fd { font-size: 13px; margin-top: 3px; }
 
-  #cE .e-genre-chip-inner { padding: 10px 16px; font-size: 15px; min-height: 46px; }
+  #cE .e-genre-chip-inner { padding: 7px 12px; font-size: 12px; min-height: 40px; }
 
-  #cE .e-decade-seg { font-size: 16px; padding: 9px 14px; min-height: 44px; }
-  #cE .e-decade-hdr { padding: 17px 20px; font-size: 19px; }
-  #cE .e-decade-hdr-cnt { font-size: 16px; }
-  #cE .e-decade-hdr-lbl { font-size: 19px; }
+  #cE .e-decade-seg { font-size: 13px; padding: 7px 11px; min-height: 38px; }
+  #cE .e-decade-hdr { padding: 14px 16px; font-size: 15px; }
+  #cE .e-decade-hdr-cnt { font-size: 13px; }
+  #cE .e-decade-hdr-lbl { font-size: 15px; }
 
-  #cE .e-search-input { font-size: 22px; height: 64px; padding: 0 20px 0 56px; }
-  #cE .e-search-icon { font-size: 30px; }
-  #cE .e-search-item { padding: 18px 20px; font-size: 20px; }
-  #cE .e-search-item-sub { font-size: 15px; }
+  #cE .e-search-input { font-size: 17px; height: 56px; padding: 0 18px 0 48px; }
+  #cE .e-search-icon { font-size: 26px; }
+  #cE .e-search-item { padding: 14px 18px; font-size: 16px; }
+  #cE .e-search-item-sub { font-size: 13px; }
 
   #preview[data-theme="E"] #mp { width: 28%; min-width: 280px; }
 
