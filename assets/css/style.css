@@ -421,7 +421,14 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 
 
 /* ── Search overlay ── */
-.e-search-wrap{position:absolute;top:48px;left:50%;transform:translateX(-50%);width:min(480px,70%);z-index:800}
+.e-search-wrap{
+  position:absolute;
+  top:48px;
+  left: calc(max(15%, 140px) + (100% - max(15%, 140px) - max(25%, 200px)) / 2);
+  transform:translateX(-50%);
+  width:min(480px, calc(100% - max(15%, 140px) - max(25%, 200px) - 16px));
+  z-index:800;
+}
 .e-search-box{display:flex;align-items:center;background:rgba(255,255,255,.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:2px solid #000;box-shadow:4px 4px 0 rgba(0,0,0,.10);height:40px;padding:0 12px;gap:8px}
 .e-search-icon{font-size:16px;color:#aaa;flex-shrink:0;line-height:1}
 .e-search-input{flex:1;border:none;outline:none;background:transparent;font-size:13px;font-family:'DM Mono',monospace;color:#000}
@@ -992,7 +999,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
   #cE .e-loc-row { padding: 14px 16px; }
   #cE .e-loc-name { font-size: 16px; }
   #cE .e-loc-meta, #cE .e-loc-fc { font-size: 13px; margin-top: 3px; }
-  #cE .e-loc-cat-chip { padding: 7px 12px; font-size: 12px; min-height: 40px; }
+  #cE .e-loc-cat-chip { padding: 3px 7px; font-size: 9px; min-height: 26px; }
 
   #cE .e-fp { width: 27%; min-width: 260px; }
   #cE .e-fp-head { font-size: 16px; letter-spacing: 4px; padding: 16px 16px 12px; }
@@ -1000,7 +1007,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
   #cE .e-ft { font-size: 16px; }
   #cE .e-fy, #cE .e-fd { font-size: 13px; margin-top: 3px; }
 
-  #cE .e-genre-chip-inner { padding: 7px 12px; font-size: 12px; min-height: 40px; }
+  #cE .e-genre-chip-inner { padding: 3px 7px; font-size: 9px; min-height: 26px; }
 
   #cE .e-decade-seg { font-size: 13px; padding: 7px 11px; min-height: 38px; }
   #cE .e-decade-hdr { padding: 14px 16px; font-size: 15px; }
@@ -1011,6 +1018,10 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
   #cE .e-search-icon { font-size: 26px; }
   #cE .e-search-item { padding: 14px 18px; font-size: 16px; }
   #cE .e-search-item-sub { font-size: 13px; }
+  .e-search-wrap {
+    left: calc(max(18%, 220px) + (100% - max(18%, 220px) - max(27%, 260px)) / 2);
+    width: min(480px, calc(100% - max(18%, 220px) - max(27%, 260px) - 16px));
+  }
 
   #preview[data-theme="E"] #mp { width: 28%; min-width: 280px; }
 
