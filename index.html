@@ -89,7 +89,7 @@
           <div class="e-info-team-row"><span class="e-info-name">Hakan ERDİN</span><span class="e-info-role">Y. Şehir Plancısı</span></div>
           <div class="e-info-team-row"><span class="e-info-name">Dilek ECER</span><span class="e-info-role">Arkeolog</span></div>
           <div class="e-info-team-row"><span class="e-info-name">Pınar ŞAHİN</span><span class="e-info-role">Sanat Tarihçi</span></div>
-          <div class="e-info-team-row"><span class="e-info-name">Sezin KARCAN KAYA</span><span class="e-info-role">Mimar</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Sezin Karcan KAYA</span><span class="e-info-role">Mimar</span></div>
           <div class="e-info-subhead">Web Harita Tasarım ve Geliştirme</div>
           <div class="e-info-team-row"><span class="e-info-name">Mihraç NAR</span><span class="e-info-role">Şehir Plancısı, CBS Uzmanı</span></div>
         </div>
@@ -140,6 +140,12 @@
       </div>
       <div class="e-genre-chips-inner" id="eGenreChips">
         <button class="e-genre-chip-inner on" onclick="eSetGenre('',this)">TÜMÜ</button>
+      </div>
+      <div class="e-origin-toggle" id="eOriginChips">
+        <span class="e-origin-toggle-ind" id="eOriginInd"></span>
+        <button class="e-origin-seg on" data-val="" onclick="eSetYabanci('',this)">TÜMÜ</button>
+        <button class="e-origin-seg" data-val="yerli" onclick="eSetYabanci(false,this)">YERLİ</button>
+        <button class="e-origin-seg" data-val="yabanci" onclick="eSetYabanci(true,this)">YABANCI</button>
       </div>
       <div class="e-decade-bar" id="eDecadeChips"><button class="e-decade-seg on" onclick="eSetDecade(0,this)">TÜMÜ</button></div>
       <div id="eFilms"></div>

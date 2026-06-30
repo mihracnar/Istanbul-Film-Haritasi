@@ -74,7 +74,11 @@ async function initApp(){
 initApp();
 
 // Resize'da bağlantı çizgilerini temizle
-window.addEventListener('resize', ()=>{ clearConnLines(); });
+window.addEventListener('resize', ()=>{
+  clearConnLines();
+  const onBtn = document.querySelector('#eOriginChips .e-origin-seg.on');
+  if(onBtn) _eOriginIndicatorMove(onBtn);
+});
 
 // Film paneli scroll'unda bağlantı çizgilerini güncelle
 window.addEventListener('scroll', e=>{

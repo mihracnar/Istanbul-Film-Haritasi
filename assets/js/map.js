@@ -38,6 +38,7 @@ let eActiveGenre  = '';
 let eActiveDir    = '';
 let eActiveLocCat = '';
 let eActiveDecade = 0;
+let eActiveYabanci = ''; // '' = tümü, false = yerli, true = yabancı
 
 /* ══════════════════════════════════════════════
    MEDIA PANEL
@@ -48,7 +49,7 @@ async function openMedia(filmId){
   const f = FILM_MAP[filmId]; if(!f) return;
   currentFilm = f;
   if(eActiveLocCat){ eActiveLocCat=''; document.querySelectorAll('.e-loc-cat-chip').forEach(b=>b.classList.remove('on')); eFilterMapMarkers(); }
-  document.getElementById('mpTitle').textContent = f.title;
+  document.getElementById('mpTitle').innerHTML = f.title + filmOrigTitleHTML(f, 'mp-orig-title');
   document.getElementById('mpMeta').textContent = `${f.year}  ·  ${f.dir}  ·  ${f.genre}`;
   document.getElementById('mpHeroLabel').textContent = `${f.year} / ${f.dir.toUpperCase()}`;
   const heroEl = document.getElementById('mpHero');
@@ -112,7 +113,7 @@ function mpGoLoc(locId){
     if(window.mSetTab) window.mSetTab('harita',document.getElementById('mTabHarita'));
   } else {
     if (window.DEBUG_FLY) console.log(`[map] flyTo M${locId} z=15`);
-    maps['E']?.flyTo({center:[loc.lng,loc.lat],zoom:15,duration:500});
+    maps['E']?.flyTo({center:[loc.lng,loc.lat],zoom:15,duration:500,padding:_eMapOverlayPadding()});
   }
 }
 function closeMedia(){
@@ -138,7 +139,10 @@ function buildLocGallerySkeleton(loc,theme){
   const nameColor = isDark ? '#F7F7F7' : '#111';
   const typeFont=theme==='E'?"font-family:'DM Mono',monospace;font-size:8px;":'';
   const skeletons=loc.films.map(()=>`<div class="loc-gallery-item loc-gallery-skeleton"></div>`).join('');
-  const headHTML=`<span style="font-size:7px;color:${accentLabel};letter-spacing:2px;text-transform:uppercase;${typeFont}">${loc.cat||loc.type}</span><span style="font-size:${theme==='E'?'16':'15'}px;color:${nameColor};${theme==='D'?'font-style:italic;':''}">${loc.name}</span><span style="font-size:8px;color:#aaa;font-family:'DM Mono',monospace">${loc.ilce}</span><span class="loc-gallery-count" style="font-size:8px;color:${accentLabel};font-family:'DM Mono',monospace;margin-left:4px">…</span><button class="loc-gallery-close" onclick="closeGalleryBar('${theme}')">×</button>`;
+  const kayipBadge = loc.kayip
+    ? `<span class="loc-gallery-kayip-badge" style="font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:#8a8a8a;padding:2px 7px;border-radius:2px;font-family:'DM Mono',monospace;white-space:nowrap;">Kayıp Eser</span>`
+    : '';
+  const headHTML=`<span style="font-size:7px;color:${accentLabel};letter-spacing:2px;text-transform:uppercase;${typeFont}">${loc.cat||loc.type}</span><span style="font-size:${theme==='E'?'16':'15'}px;color:${nameColor};${theme==='D'?'font-style:italic;':''}">${loc.name}</span>${kayipBadge}<span style="font-size:8px;color:#aaa;font-family:'DM Mono',monospace">${loc.ilce}</span><span class="loc-gallery-count" style="font-size:8px;color:${accentLabel};font-family:'DM Mono',monospace;margin-left:4px">…</span><button class="loc-gallery-close" onclick="closeGalleryBar('${theme}')">×</button>`;
   return `<div class="loc-gallery-head">${headHTML}</div><div class="loc-gallery-scroll" id="locGalleryScroll-${theme}">${skeletons}</div>`;
 }
 async function fillLocGallery(locId,theme){
@@ -202,6 +206,34 @@ function selectLoc(theme,id){
    ══════════════════════════════════════════════ */
 function _isMapReady(m){ return m && inited.E && !!m.getSource('locs'); }
 
+/* ══════════════════════════════════════════════
+   ÖRTÜŞEN UI ALANLARI — gerçek zamanlı padding ölçümü
+   Arama kutusu (üst) ve açıksa galeri barı (alt) haritayı
+   görsel olarak kaplıyor ama konteyner boyutunu değiştirmiyor.
+   fitBounds/flyTo bu yüzden gerçek padding'i DOM'dan ölçer.
+══════════════════════════════════════════════ */
+function _eMapOverlayPadding(){
+  const mapEl = document.getElementById('mapE');
+  if(!mapEl) return { top:60, bottom:60, left:50, right:50 };
+  const mapRect = mapEl.getBoundingClientRect();
+
+  let top = 24;
+  const searchWrap = document.getElementById('eSearchWrap');
+  if(searchWrap){
+    const r = searchWrap.getBoundingClientRect();
+    if(r.height > 0) top = Math.max(top, (r.bottom - mapRect.top) + 16);
+  }
+
+  let bottom = 24;
+  const locBar = document.getElementById('eLocBar');
+  if(locBar && locBar.style.display === 'flex'){
+    const r = locBar.getBoundingClientRect();
+    if(r.height > 0) bottom = Math.max(bottom, (mapRect.bottom - r.top) + 16);
+  }
+
+  return { top, bottom, left:40, right:40 };
+}
+
 function createMap(id, theme){
   if(theme !== 'E') return;
 
@@ -210,7 +242,7 @@ function createMap(id, theme){
     style:              'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     center:             IST_CENTER,
     zoom:               12,
-    minZoom:            10,
+    minZoom:            9,
     maxZoom:            19,
     attributionControl: false,
     doubleClickZoom:    false,
@@ -237,7 +269,7 @@ function _setupEMapSources(m){
   const locFeatures = LOCS.map(loc => ({
     type:       'Feature',
     id:          loc.id,
-    properties: { id: loc.id, name: loc.name, filmCount: loc.films.length },
+    properties: { id: loc.id, name: loc.name, filmCount: loc.films.length, kayip: !!loc.kayip },
     geometry:   { type: 'Point', coordinates: [loc.lng, loc.lat] }
   }));
   m.addSource('locs', {
@@ -281,8 +313,10 @@ function _setupEMapLayers(m){
     id: 'locs-dots', type: 'circle', source: 'locs',
     paint: {
       'circle-radius': 3,
-      'circle-color': '#000000',
-      'circle-opacity': 0.90,
+      'circle-color': ['case', ['get','kayip'], '#999999', '#000000'],
+      'circle-opacity': ['case', ['get','kayip'], 0.55, 0.90],
+      'circle-stroke-width': ['case', ['get','kayip'], 1, 0],
+      'circle-stroke-color': '#999999',
     }
   });
 
@@ -302,7 +336,7 @@ function _setupEMapLayers(m){
     id: 'locs-labels', type: 'symbol', source: 'locs',
     layout: Object.assign({}, _BASE, {
       'text-field': ['format',
-        '• ', { 'font-scale':0.85, 'text-color':'#f03010' },
+        ['case',['get','kayip'],'⊘ ','• '], { 'font-scale':0.85, 'text-color': ['case',['get','kayip'],'#999999','#f03010'] },
         ['get','name'], {},
         ' ×', { 'font-scale':0.78, 'text-color':'rgba(255,255,255,0.5)' },
         ['to-string',['get','filmCount']], { 'font-scale':0.78, 'text-color':'rgba(255,255,255,0.5)' }
@@ -313,7 +347,7 @@ function _setupEMapLayers(m){
     }),
     paint: {
       'text-color': '#ffffff',
-      'icon-color': 'rgba(0,0,0,0.88)',
+      'icon-color': ['case', ['get','kayip'], 'rgba(90,90,90,0.85)', 'rgba(0,0,0,0.88)'],
       'icon-opacity': ['case',['boolean',['feature-state','selected'],false], 0, 1],
       'text-opacity': ['case',['boolean',['feature-state','selected'],false], 0, 1],
     }
@@ -324,7 +358,7 @@ function _setupEMapLayers(m){
     id: 'locs-labels-sel', type: 'symbol', source: 'locs-sel',
     layout: Object.assign({}, _BASE, {
       'text-field': ['format',
-        '• ', { 'font-scale':0.85, 'text-color':'rgba(255,255,255,0.75)' },
+        ['case',['get','kayip'],'⊘ ','• '], { 'font-scale':0.85, 'text-color':'rgba(255,255,255,0.75)' },
         ['get','name'], {},
         ' ×', { 'font-scale':0.78, 'text-color':'rgba(255,255,255,0.5)' },
         ['to-string',['get','filmCount']], { 'font-scale':0.78, 'text-color':'rgba(255,255,255,0.5)' }
@@ -360,9 +394,27 @@ function _resetAllFilters(m){
   }
   eActiveLoc = null; clearSelLayers();
   document.querySelectorAll('#cE .e-loc-row,#cE .e-film-row').forEach(el => el.classList.remove('on'));
+  // Filtre nedeniyle soluklaşmış mekan satırlarını sıfırla
+  document.querySelectorAll('#cE .e-loc-row').forEach(el => { el.style.opacity = ''; });
   // Mekan badge temizle
   const lb = document.getElementById('eLocBadge');
   if(lb) lb.style.display = 'none';
+  // Yerli/Yabancı filtresini sıfırla
+  eActiveYabanci = '';
+  document.querySelectorAll('#eOriginChips .e-origin-seg').forEach(b=>b.classList.remove('on'));
+  const originAllBtn = document.querySelector('#eOriginChips .e-origin-seg[data-val=""]');
+  if(originAllBtn){ originAllBtn.classList.add('on'); _eOriginIndicatorMove(originAllBtn); }
+  // Tür filtresini sıfırla
+  eActiveGenre = '';
+  document.querySelectorAll('#eGenreChips .e-genre-chip-inner').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#eGenreChips .e-genre-chip-inner:first-child')?.classList.add('on');
+  // Onyıl filtresini sıfırla
+  eActiveDecade = 0;
+  document.querySelectorAll('.e-decade-seg').forEach(b=>b.classList.toggle('on', b.dataset.decade===undefined));
+  // Yönetmen filtresini sıfırla
+  eActiveDir = '';
+  const dirBadge = document.getElementById('eDirBadge');
+  if(dirBadge) dirBadge.style.display = 'none';
   eRenderFilms(); eUpdateCounts();
   m.flyTo({ center: IST_CENTER, zoom: 12, duration: 800 });
 }
@@ -404,7 +456,7 @@ function _syncSelSource(){
   const feats = ids.map(id=>{
     const l = LOC_MAP[id]; if(!l) return null;
     return { type:'Feature', id:l.id,
-      properties:{id:l.id, name:l.name, filmCount:l.films.length},
+      properties:{id:l.id, name:l.name, filmCount:l.films.length, kayip:!!l.kayip},
       geometry:{type:'Point', coordinates:[l.lng, l.lat]} };
   }).filter(Boolean);
   try { m.getSource('locs-sel').setData({type:'FeatureCollection', features:feats}); } catch(e){}
@@ -444,7 +496,8 @@ function eFilterMapMarkers(){
   const filteredFilms = FILMS.filter(f =>
     (!eActiveGenre  || f.genre === eActiveGenre)  &&
     (!eActiveDir    || f.dir   === eActiveDir)     &&
-    (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade)
+    (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade) &&
+    (eActiveYabanci === '' || f.yabanci === eActiveYabanci)
   );
   const filteredLocIds = new Set(filteredFilms.flatMap(f => f.locs));
   const visibleLocs = LOCS.filter(loc => {
@@ -459,6 +512,7 @@ function eFilterMapMarkers(){
     if (eActiveDir)     fs.push(`yön="${eActiveDir}"`);
     if (eActiveDecade)  fs.push(`onyıl=${eActiveDecade}`);
     if (eActiveLocCat)  fs.push(`mekan="${eActiveLocCat}"`);
+    if (eActiveYabanci !== '') fs.push(`köken=${eActiveYabanci ? 'yabancı' : 'yerli'}`);
     const filterStr = fs.length ? fs.join(' ') : 'YOK';
     console.log(`[filtre] ${filterStr} → ${filteredFilms.length} film, ${visibleLocs.length} pin`);
     if (filteredFilms.length === 0) console.warn(`[filtre] sıfır film sonucu — ${filterStr}`);
@@ -481,16 +535,16 @@ function eFilterMapMarkers(){
   });
 
   if(window.innerWidth > 640){
-    const hasFilter = eActiveLocCat || eActiveDir || eActiveGenre || eActiveDecade;
+    const hasFilter = eActiveLocCat || eActiveDir || eActiveGenre || eActiveDecade || eActiveYabanci !== '';
     if(hasFilter && visibleLocs.length){
       if(visibleLocs.length === 1){
         if (window.DEBUG_FLY) console.log(`[map] flyTo (filtre tek pin) M${visibleLocs[0].id}`);
-        m.flyTo({ center:[visibleLocs[0].lng, visibleLocs[0].lat], zoom:14, duration:800 });
+        m.flyTo({ center:[visibleLocs[0].lng, visibleLocs[0].lat], zoom:14, duration:800, padding:_eMapOverlayPadding() });
       } else {
         if (window.DEBUG_FLY) console.log(`[map] fitBounds (filtre) ${visibleLocs.length} pin`);
         const bounds = new maplibregl.LngLatBounds();
         visibleLocs.forEach(l => bounds.extend([l.lng, l.lat]));
-        m.fitBounds(bounds, { padding:60, maxZoom:15, duration:800 });
+        m.fitBounds(bounds, { padding:_eMapOverlayPadding(), maxZoom:15, duration:800 });
       }
     } else if(!hasFilter){
       if (window.DEBUG_FLY) console.log('[map] flyTo (filtre yok) IST_CENTER');
@@ -516,13 +570,14 @@ function highlightFilmOnMap(theme, filmId){
       hlLayers[theme].push({ _restore: () => ePinHighlight(loc.id, false) });
     });
     if(window.innerWidth > 640 && locs.length){
+      const ov = _eMapOverlayPadding();
       if(locs.length === 1){
-        m.flyTo({ center:[locs[0].lng, locs[0].lat], zoom:14, duration:750 });
+        m.flyTo({ center:[locs[0].lng, locs[0].lat], zoom:14, duration:750, padding:ov });
       } else {
         const bounds = new maplibregl.LngLatBounds();
         locs.forEach(l => bounds.extend([l.lng, l.lat]));
         const pad = locs.length <= 3 ? 120 : locs.length <= 8 ? 100 : 80;
-        m.fitBounds(bounds, { padding: pad, maxZoom: 13, duration: 750 });
+        m.fitBounds(bounds, { padding:{ top:Math.max(pad,ov.top), bottom:Math.max(pad,ov.bottom), left:pad, right:pad }, maxZoom: 13, duration: 750 });
       }
     }
   }
@@ -718,7 +773,8 @@ window.debug.map = {
     const filteredFilms = FILMS.filter(f =>
       (!eActiveGenre  || f.genre === eActiveGenre)  &&
       (!eActiveDir    || f.dir   === eActiveDir)    &&
-      (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade)
+      (!eActiveDecade || Math.floor(f.year/10)*10 === eActiveDecade) &&
+      (eActiveYabanci === '' || f.yabanci === eActiveYabanci)
     );
     const filteredLocIds = new Set(filteredFilms.flatMap(f => f.locs));
     const visible = LOCS.filter(loc =>
@@ -728,5 +784,38 @@ window.debug.map = {
       visible.slice(0, 30).map(l => `M${l.id} "${l.name}"`),
       visible.length > 30 ? '...' : '');
     return visible;
+  },
+
+  /* Şu an haritada görünmesi gereken pinlerin gerçekten
+     örtüşmeyen (arama kutusu/galeri barı altında kalmayan)
+     alanda olup olmadığını kontrol eder. */
+  verifyVisible() {
+    const m = maps['E'];
+    if(!m || !inited.E){ console.warn('Harita henüz hazır değil'); return; }
+    const mapEl = document.getElementById('mapE');
+    if(!mapEl) return;
+    const mapRect = mapEl.getBoundingClientRect();
+    const ov = _eMapOverlayPadding();
+    const safe = {
+      top:    mapRect.top + ov.top,
+      bottom: mapRect.bottom - ov.bottom,
+      left:   mapRect.left + ov.left,
+      right:  mapRect.right - ov.right,
+    };
+    const visible = window.debug.map.visiblePins();
+    const hidden = [];
+    visible.forEach(l => {
+      const p = m.project([l.lng, l.lat]);
+      const sx = mapRect.left + p.x, sy = mapRect.top + p.y;
+      if(sx < safe.left || sx > safe.right || sy < safe.top || sy > safe.bottom){
+        hidden.push(`M${l.id} "${l.name}" (${sx.toFixed(0)},${sy.toFixed(0)})`);
+      }
+    });
+    if(hidden.length){
+      console.warn(`[map] ${hidden.length}/${visible.length} pin örtüşen alanda / kadrajın dışında:`, hidden);
+    } else {
+      console.log(`[map] ${visible.length} pinin tamamı güvenli alanda ✓`);
+    }
+    return hidden;
   }
 };

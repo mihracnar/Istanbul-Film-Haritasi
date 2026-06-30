@@ -54,6 +54,10 @@ function buildE(){
   eUpdateCounts();
   // Sync loc-cat-chips height to sum of right-column filter areas
   requestAnimationFrame(eSyncFilterHeights);
+  requestAnimationFrame(()=>{
+    const onBtn = document.querySelector('#eOriginChips .e-origin-seg.on');
+    if(onBtn) _eOriginIndicatorMove(onBtn);
+  });
 }
 
 function eSyncFilterHeights(){
@@ -71,6 +75,7 @@ function eSetGenre(g, btn){
   eActiveGenre = g;
   document.querySelectorAll('.e-genre-chip-inner').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  _clearLocSelectionState();
   eApplyFilters();
   eFilterMapMarkers();
 }
@@ -80,6 +85,7 @@ function eSetDecade(d, btn){
   eActiveDecade = d;
   document.querySelectorAll('.e-decade-seg').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  _clearLocSelectionState();
   eApplyFilters();
   eFilterMapMarkers();
 
@@ -99,6 +105,29 @@ function eSetDecade(d, btn){
     if(arr)  arr.className  = 'e-decade-hdr-arr'  + (isOpen ? ' open' : '');
     if(body) body.className = 'e-decade-body' + (isOpen ? ' open' : ' closed');
   });
+}
+
+function eSetYabanci(val, btn){
+  if (window.DEBUG_CLICK) console.log(`[ui] eSetYabanci ${val===''? '(TÜMÜ)' : (val? 'YABANCI':'YERLİ')}`);
+  eActiveYabanci = val;
+  document.querySelectorAll('#eOriginChips .e-origin-seg').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  _eOriginIndicatorMove(btn);
+  _clearLocSelectionState();
+  eApplyFilters();
+  eFilterMapMarkers();
+}
+
+/* Kayan segment indicator'ını seçili butonun altına taşı */
+function _eOriginIndicatorMove(btn){
+  const ind  = document.getElementById('eOriginInd');
+  const wrap = document.getElementById('eOriginChips');
+  if(!ind || !wrap || !btn) return;
+  const wrapRect = wrap.getBoundingClientRect();
+  const btnRect  = btn.getBoundingClientRect();
+  if(wrapRect.width === 0) return; // henüz layout alınmamış (display:none vb.)
+  ind.style.width     = btnRect.width + 'px';
+  ind.style.transform = `translateX(${btnRect.left - wrapRect.left}px)`;
 }
 
 /* Director autocomplete */
@@ -157,7 +186,7 @@ function eSearchType(val) {
       eSearchItems.push({ type: 'film', id: f.id });
       html += `<div class="e-search-item type-film" data-idx="${idx}" onmousedown="eSearchSelect(${idx})">
         <span class="e-search-item-name">${hi(f.title)}</span>
-        <span class="e-search-item-sub">${f.year} · ${f.genre}</span>
+        <span class="e-search-item-sub">${f.year} · ${f.genre}${f.yabanci && f.origTitle && normStr(f.origTitle)!==normStr(f.title) ? ' · ' + f.origTitle : ''}</span>
       </div>`;
     });
   }
@@ -209,6 +238,7 @@ function eSearchSelect(idx){
   } else if(item.type==='dir'){
     // Media paneli açıksa kapat
     if(document.getElementById('mp').classList.contains('open')) closeMedia();
+    _clearLocSelectionState();
     eActiveDir = item.dir;
     eApplyFilters();
     eFilterMapMarkers();

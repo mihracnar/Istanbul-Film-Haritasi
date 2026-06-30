@@ -44,6 +44,17 @@ function normStr(s) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   filmOrigTitleHTML — yabancı filmler için orijinal isim eki.
+   Sadece f.yabanci=true, origTitle dolu ve Türkçe adından
+   farklıysa "(Orijinal İsim)" üretir, aksi halde boş string.
+   ════════════════════════════════════════════════════════════ */
+function filmOrigTitleHTML(f, cssClass){
+  if(!f || !f.yabanci || !f.origTitle) return '';
+  if(normStr(f.origTitle) === normStr(f.title)) return '';
+  return ` <span class="${cssClass || 'e-orig-title'}">(${f.origTitle})</span>`;
+}
+
+/* ════════════════════════════════════════════════════════════
    matchLocs — TAM eşleşme. DEBUG_MATCH açıkken her parça loglar.
    ════════════════════════════════════════════════════════════ */
 function matchLocs(cekildigiYer, locsArr, filmCtx) {
@@ -110,6 +121,7 @@ async function loadSheetsData() {
           lat:  coords[0] || 0,
           lng:  coords[1] || 0,
           ilce: r[4] || '',
+          kayip: (r[5] || '').trim() === '1',
           type: 'nokta',
           films: []
         };
@@ -174,6 +186,7 @@ async function loadSheetsData() {
           year:  parseInt(r[5], 10) || 0,
           locs:  [],
           desc:  (r[7] || '').trim(),
+          origTitle: (r[8] || '').trim(),
           stills: [],
           yerlerRaw: yerler
         };

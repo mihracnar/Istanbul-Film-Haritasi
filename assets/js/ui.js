@@ -7,7 +7,9 @@
    ════════════════════════════════════════════════════════════ */
 
 function eRenderLocs(){
-  const list = eActiveLocCat ? LOCS.filter(l=>l.cat===eActiveLocCat) : LOCS;
+  const list = (eActiveLocCat ? LOCS.filter(l=>l.cat===eActiveLocCat) : LOCS)
+    .slice()
+    .sort((a,b)=>a.name.localeCompare(b.name,'tr'));
   document.getElementById('eLocs').innerHTML = list.map(loc=>`
     <div class="e-loc-row" id="eLoc${loc.id}" onclick="eSelectLoc(${loc.id})">
       <div class="e-loc-name">${loc.name}</div>
@@ -42,7 +44,7 @@ function eRenderFilms(films){
     const rows = fs.map(f=>
       '<div class="e-film-row" id="eFilm'+f.id+'" onclick="openMedia('+f.id+')">' +
         '<div class="e-fy">'+f.year+'</div>' +
-        '<div class="e-ft">'+f.title+'</div>' +
+        '<div class="e-ft">'+f.title+filmOrigTitleHTML(f)+'</div>' +
         '<div class="e-fd">'+f.dir.split(' ').pop()+'</div>' +
       '</div>'
     ).join('');
@@ -103,7 +105,8 @@ function eApplyFilters(){
     (!eActiveGenre  || f.genre===eActiveGenre) &&
     (!eActiveDir    || f.dir===eActiveDir)     &&
     (!eActiveDecade || Math.floor(f.year/10)*10===eActiveDecade) &&
-    (!eActiveLoc    || LOC_MAP[eActiveLoc]?.films.includes(f.id))
+    (!eActiveLoc    || LOC_MAP[eActiveLoc]?.films.includes(f.id)) &&
+    (eActiveYabanci === '' || f.yabanci === eActiveYabanci)
   );
   if (window.DEBUG_FILTER) {
     const fs = [];
@@ -111,6 +114,7 @@ function eApplyFilters(){
     if (eActiveDir)    fs.push(`yön="${eActiveDir}"`);
     if (eActiveDecade) fs.push(`onyıl=${eActiveDecade}`);
     if (eActiveLoc)    fs.push(`mekan=M${eActiveLoc}`);
+    if (eActiveYabanci !== '') fs.push(`köken=${eActiveYabanci ? 'yabancı' : 'yerli'}`);
     console.log(`[ui] eApplyFilters [${fs.join(' ') || 'yok'}] → ${filtered.length}/${FILMS.length} film`);
   }
   eRenderFilms(filtered);
@@ -129,8 +133,9 @@ function eApplyFilters(){
   });
 }
 
-/* ── Mekan badge temizle ── */
-function eLocBadgeClear(){
+/* ── Mekan seçim durumunu temizle (rozet, pin, conn çizgileri, galeri) ── */
+function _clearLocSelectionState(){
+  if(!eActiveLoc) return;
   eActiveLoc = null;
   const badge = document.getElementById('eLocBadge');
   if(badge) badge.style.display = 'none';
@@ -141,6 +146,10 @@ function eLocBadgeClear(){
   document.querySelectorAll('#cE .e-film-row').forEach(el=>el.classList.remove('on'));
   const bar = document.getElementById('eLocBar');
   if(bar){ bar.style.display='none'; bar.innerHTML=''; }
+}
+
+function eLocBadgeClear(){
+  _clearLocSelectionState();
   eApplyFilters();
 }
 
@@ -214,7 +223,7 @@ function eSelectLoc(id){
 
   // Haritaya uç — MapLibre flyTo ([lng, lat] sırası!)
   if(maps.E){
-    maps.E.flyTo({ center:[loc.lng, loc.lat], zoom:15, duration:500 });
+    maps.E.flyTo({ center:[loc.lng, loc.lat], zoom:15, duration:500, padding:_eMapOverlayPadding() });
     if(window._connTimer) clearTimeout(window._connTimer);
     if(window._connMoveEnd) { maps.E.off('moveend', window._connMoveEnd); window._connMoveEnd=null; }
     const _targetLocId = loc.id;
