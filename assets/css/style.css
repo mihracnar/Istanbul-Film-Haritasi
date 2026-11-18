@@ -417,6 +417,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 }
 .e-info-name{font-size:11px;color:#111;white-space:nowrap;flex-shrink:0;font-weight:400}
 .e-info-role{font-size:10px;color:#999;flex:1}
+.e-info-refs p{font-size:10.5px;line-height:1.55;margin-bottom:8px;padding-left:14px;text-indent:-14px}
 
 
 
