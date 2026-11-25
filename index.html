@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinemada İstanbul</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23f03010'/></svg>">
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="katki-modal.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Teko:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Splash Screen -->
+  <div id="eLoadingScreen">
+    <div class="els-splash">
+      <button class="els-rec-btn" id="elsRecBtn" onclick="elsSplashClose()" disabled>
+        <svg class="els-rec-ring" width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="30" fill="none" stroke="#f03010" stroke-width="1.5" opacity="0.15"/>
+          <circle class="els-rec-arc" cx="36" cy="36" r="30" fill="none" stroke="#f03010" stroke-width="1.5"
+            stroke-dasharray="40 149" stroke-linecap="round">
+            <animateTransform attributeName="transform" type="rotate"
+              from="0 36 36" to="360 36 36" dur="1.1s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+        <div class="els-rec-dot"></div>
+        <div class="els-rec-cursor" id="elsRecCursor">
+          <span class="els-rec-label">Keşfetmeye Başla</span>
+          <svg width="36" height="36" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2L2 14L6 10L8 16L10 15L8 9L14 9L2 2Z" fill="#111" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </button>
+      <div class="els-loader" id="elsLoader">
+        <div class="els-loader-bar"><div class="els-loader-fill" id="elsBarInner"></div></div>
+        <div class="els-loader-msg" id="elsMsg">Yükleniyor…</div>
+      </div>
+      <div class="els-splash-title">Sinemada İstanbul</div>
+      <div class="els-splash-sub">İBB Sinema Ofisi</div>
+      <p class="els-splash-desc">İstanbul, bir asrı aşkın süredir sinemacıların vazgeçilmez sahnesi oldu. Dönem, tür ve mekana göre filtreleyip Türk ve dünya sinemasının bu şehirde bıraktığı izleri harita üzerinde takip edebilirsiniz.</p>
+    </div>
+  </div>
+
+
+<div id="preview" data-theme="E">
+
+<div id="cE" class="concept on">
+  <div class="top">
+    <img id="eLogoImg" src="assets/images/logo.png" alt="İBB Sinema Ofisi" style="height:43px;width:auto;display:block;flex-shrink:0;margin-right:4px">
+    <div class="sw-d"></div>
+    <div class="sw-s">Sinemada İstanbul</div>
+    <div class="e-counts" id="eCountsEl">— film<br>— mekan</div>
+    <div id="katki-info-grup">
+      <button class="e-info-btn" onclick="window.katkiModalAc()" title="Katkıda Bulun">+</button>
+      <button class="e-info-btn" onclick="eInfoOpen()" title="Hakkında">i</button>
+    </div>
+    <div class="e-theme-toggle">
+      <button id="eBtnSade" class="active" onclick="eSetTheme('sade')">☀</button>
+      <button id="eBtnRenkli" onclick="eSetTheme('renkli')">☾</button>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div id="eInfoModal" class="e-info-modal" onclick="eInfoClose(event)">
+    <div class="e-info-box">
+      <button class="e-info-close" onclick="eInfoClose()">×</button>
+      <div class="e-info-content">
+        <div class="e-info-title">Sinemada İstanbul</div>
+        <div class="e-info-lead">İBB Sinema Ofisi</div>
+        <div class="e-info-body">
+          <p>İstanbul ve sinema severler için bir başvuru kaynağı oluşturmak, mekânsal hafıza çalışmalarını, şehircilik ve mimarlık araştırmalarını desteklemek amacıyla hazırlanan Sinemada İstanbul Haritası katkıya açık bir çalışma olarak kurgulanmıştır.</p>
+          <p>İBB Yayınlarından çıkan <a href="https://katalog.ibb.gov.tr/yordam/?p=1&dil=0&q=03014425&alan=kunyeDemirbasKN_txt&demirbas=03014425" target="_blank" class="e-info-link"><em>Türk Sineması’nda İstanbul</em></a> (2021) ve <a href="https://katalog.ibb.gov.tr/yordam/?p=1&dil=0&q=03014432&alan=kunyeDemirbasKN_txt&demirbas=03014432" target="_blank" class="e-info-link"><em>Dünya Sineması’nda İstanbul</em></a> (2021) kitapları haritanın ana kaynaklarını oluşturmuştur. Yönetmen ve oyuncu filmografileri taranmış, festivallerde ödül alan ve ses getiren mekânsal olarak dikkate değer filmler haritaya eklenmiştir. <a href="https://sehirplanlama.ibb.istanbul/beyoglu-arsivi-filmler-ve-diziler/" target="_blank" class="e-info-link">İBB Şehir Planlama Müdürlüğü</a> tarafından yapılan <em>Beyoğlu Senin</em> çalışmasında Beyoğlu’na ilişkin yapılan film ve belgesel seçkisi de çalışmaya dahil edilmiştir.</p>
+        </div>
+        <div class="e-info-section-title">Ekip</div>
+        <div class="e-info-team">
+          <div class="e-info-team-row"><span class="e-info-name">Mahir POLAT</span><span class="e-info-role">Genel Sekreter Yardımcısı</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Tolga Volkan ASLAN</span><span class="e-info-role">Kültür, Sanat ve Sosyal İşler Dairesi Başkanı</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Hüseyin Gazi COŞAN</span><span class="e-info-role">Turizm Şube Müdürü</span></div>
+          <div class="e-info-subhead">Araştırma ve Seçki</div>
+          <div class="e-info-team-row"><span class="e-info-name">Selda YILDIRIM BURMA</span><span class="e-info-role">Y. Şehir Plancısı</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Hakan ERDİN</span><span class="e-info-role">Dr. Şehir Plancısı</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Dilek ECER</span><span class="e-info-role">Arkeolog</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Pınar ŞAHİN</span><span class="e-info-role">Dr. Sanat Tarihçi</span></div>
+          <div class="e-info-team-row"><span class="e-info-name">Sezin Karcan KAYA</span><span class="e-info-role">Mimar</span></div>
+          <div class="e-info-subhead">Web Harita Tasarım ve Geliştirme</div>
+          <div class="e-info-team-row"><span class="e-info-name">Mihraç NAR</span><span class="e-info-role">Şehir Plancısı</span></div>
+        </div>
+        <div class="e-info-section-title">Kaynakça</div>
+        <div class="e-info-body e-info-refs">
+          <p>Türk Sinemasında İstanbul: İBB Kültür A.Ş. Yayınları, 2021.</p>
+          <p>Dünya Sinemasında İstanbul: İBB Kültür A.Ş. Yayınları, 2021.</p>
+          <p>Yeşilçam Sineması'nda İstanbul: Değişen Kültür ve Toplumsal Yaşam. Barış Bulunmaz ve Ömer Osmanoğlu. İBB Kültür A.Ş. Yayınları, 2016.</p>
+          <p>Başrolde Mimarlık: Yeşilçam Filmlerinde Mekân ve Modernite: Haz. Umut Şumnu. İstanbul: Everest Yayınları, 2023.</p>
+          <p>Türk Sinemasında Aidiyetsizliğin Mekanı: Kayıplar ve Ölüler Kenti İstanbul: Şeyma Balcı. Ankara: Phonenix Yayınevi, 2021.</p>
+          <p>Türk Sinemasının Trenleri: Şeyma Balcı-Seçil Büker. İstanbul: Notabene Yayınevi, 2026.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- Sol sidebar -->
+    <div class="e-sb">
+      <div class="e-sb-h">MEKANLAR</div>
+      <div class="e-loc-cat-chips" id="eLocCatChips"></div>
+      <div id="eLocs"></div>
+    </div>
+
+    <!-- Harita + galeri (flex column) -->
+    <div class="e-map-col">
+    <div class="map-wrap">
+      <div class="lmap" id="mapE"></div>
+      <div class="e-search-wrap" id="eSearchWrap">
+        <div class="e-search-box">
+          <span class="e-search-icon">⌕</span>
+          <input id="eSearchInput" class="e-search-input"
+            placeholder="Film, mekan veya yönetmen ara…"
+            autocomplete="off"
+            oninput="eSearchType(this.value)"
+            onfocus="eSearchType(this.value)"
+            onkeydown="eSearchKey(event)">
+          <button class="e-search-clear" id="eSearchClear" onclick="eSearchClear()">×</button>
+        </div>
+        <div class="e-search-drop" id="eSearchDrop"></div>
+      </div>
+    </div><!-- /map-wrap -->
+    <div id="eLocBar" class="e-loc-bar" style="display:none"></div>
+    </div><!-- /e-map-col -->
+
+    <!-- Sağ sidebar -->
+    <div class="e-fp">
+      <div class="e-fp-head">FİLMLER</div>
+      <div class="e-dir-badge" id="eDirBadge" style="display:none">
+        <span class="e-dir-badge-lbl" id="eDirBadgeLbl"></span>
+        <button class="e-dir-badge-x" onclick="eSearchClear()">×</button>
+      </div>
+      <div class="e-loc-badge" id="eLocBadge" style="display:none">
+        <span class="e-loc-badge-ico">◎</span>
+        <span class="e-loc-badge-lbl" id="eLocBadgeLbl"></span>
+        <button class="e-loc-badge-x" onclick="eLocBadgeClear()">×</button>
+      </div>
+      <div class="e-genre-chips-inner" id="eGenreChips">
+        <button class="e-genre-chip-inner on" onclick="eSetGenre('',this)">TÜMÜ</button>
+      </div>
+      <div class="e-origin-toggle" id="eOriginChips">
+        <span class="e-origin-toggle-ind" id="eOriginInd"></span>
+        <button class="e-origin-seg on" data-val="" onclick="eSetYabanci('',this)">TÜMÜ</button>
+        <button class="e-origin-seg" data-val="yerli" onclick="eSetYabanci(false,this)">YERLİ</button>
+        <button class="e-origin-seg" data-val="yabanci" onclick="eSetYabanci(true,this)">YABANCI</button>
+      </div>
+      <div class="e-decade-bar" id="eDecadeChips"><button class="e-decade-seg on" onclick="eSetDecade(0,this)">TÜMÜ</button></div>
+      <div id="eFilms"></div>
+    </div>
+  </div><!-- /body -->
+
+  <!-- Media panel -->
+  <div id="mp">
+    <div class="mp-top">
+      <div class="mp-top-left">
+        <div class="mp-title" id="mpTitle">Film Adı</div>
+        <div class="mp-meta" id="mpMeta"></div>
+      </div>
+      <button class="mp-close" onclick="closeMedia()">✕</button>
+    </div>
+    <div class="mp-scroll">
+      <div>
+        <div class="mp-sec-label" id="mpHeroLabel">Sahne</div>
+        <div class="mp-hero-wrap" onclick="mpOpenLightbox()" style="cursor:default">
+          <img class="mp-hero" id="mpHero" src="" alt="">
+          <div class="mp-hero-zoom">⤢</div>
+        </div>
+      </div>
+      <div>
+        <div class="mp-sec-label">Diğer Sahneler</div>
+        <div class="mp-thumbs" id="mpThumbs"></div>
+      </div>
+      <hr class="mp-divider">
+      <div class="mp-desc" id="mpDesc"></div>
+      <div>
+        <div class="mp-sec-label">Çekim Mekanları</div>
+        <div class="mp-locs" id="mpLocs"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /cE -->
+
+</div><!-- /preview -->
+
+<!-- MOBİL BOTTOM NAV -->
+<nav id="mobileNav">
+  <button class="m-tab active" id="mTabHarita" onclick="mSetTab('harita',this)">
+    <span class="m-tab-icon">⊞</span>
+    <span class="m-tab-lbl">Harita</span>
+  </button>
+  <button class="m-tab" id="mTabMekanlar" onclick="mSetTab('mekanlar',this)">
+    <span class="m-tab-icon">◎</span>
+    <span class="m-tab-lbl">Mekanlar</span>
+  </button>
+  <button class="m-tab" id="mTabFilmler" onclick="mSetTab('filmler',this)">
+    <span class="m-tab-icon">▶</span>
+    <span class="m-tab-lbl">Filmler</span>
+  </button>
+</nav>
+
+<div id="infobar">
+  <div id="desc">İBB Sinema Ofisi</div>
+  <div class="h">mekan → galeri &nbsp;|&nbsp; film → detay &nbsp;|&nbsp; haritaya tıkla: sıfırla</div>
+</div>
+
+<!-- GALLERY LIGHTBOX -->
+<div id="gLightbox" onclick="gLbClose(event)">
+  <button class="gl-close" onclick="closeGLb()">×</button>
+  <button class="gl-nav gl-prev" onclick="event.stopPropagation();gLbNav(-1)">‹</button>
+  <img id="gLbImg" src="" alt="">
+  <div><div class="gl-film" id="gLbFilm"></div><div class="gl-caption" id="gLbCaption"></div></div>
+  <button class="gl-nav gl-next" onclick="event.stopPropagation();gLbNav(1)">›</button>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/tmdb.js"></script>
+<script src="assets/js/map.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/init.js"></script>
+<script src="katki-modal.js"></script>
+</body>
+</html>
