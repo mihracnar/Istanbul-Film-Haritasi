@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Veri Paneli — İstanbul Sinema Haritası</title>
+  <title>İçerik Paneli — Sinemada İstanbul</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Teko:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <!-- Giriş -->
   <section id="login" class="login" hidden>
     <form id="login-form" class="login-box" autocomplete="off">
-      <h1>Sinema Haritası<br><span>Veri Paneli</span></h1>
+      <h1>Sinemada İstanbul<br><span>İçerik Paneli</span></h1>
       <label for="login-token">Erişim anahtarı</label>
       <input id="login-token" type="password" required autofocus>
       <label class="check"><input id="login-remember" type="checkbox"> Bu cihazda hatırla</label>
@@ -27,33 +27,17 @@
   <!-- Uygulama -->
   <div id="app" class="app" hidden>
     <header class="top">
-      <div class="brand">Sinema Haritası <span>/ Veri Paneli</span></div>
-      <nav id="tabs" class="tabs" role="tablist"></nav>
+      <div class="brand">Sinemada İstanbul <span>/ İçerik Paneli</span></div>
+      <nav id="nav" class="nav" aria-label="Bölümler"></nav>
       <div class="top-right">
         <span id="demo-badge" class="badge demo" hidden>DEMO</span>
         <span id="editor-name" class="muted"></span>
-        <button id="btn-reload" class="btn ghost" title="Veriyi sunucudan yeniden yükle">Yenile</button>
+        <a class="btn ghost" href="../" target="_blank" rel="noopener">Haritayı aç ↗</a>
+        <button id="btn-reload" class="btn ghost" title="Veriyi yeniden yükle">Yenile</button>
         <button id="btn-logout" class="btn ghost">Çıkış</button>
       </div>
     </header>
-
-    <main class="main">
-      <aside class="list-pane">
-        <div class="list-tools">
-          <input id="search" type="search" placeholder="Ara…  ( / )" aria-label="Kayıtlarda ara">
-          <button id="btn-new" class="btn primary" title="Yeni kayıt">+ Yeni</button>
-        </div>
-        <div class="list-filters">
-          <label class="check"><input id="only-issues" type="checkbox"> Yalnızca sorunlu kayıtlar</label>
-          <span id="list-count" class="muted"></span>
-        </div>
-        <ol id="list" class="list"></ol>
-      </aside>
-
-      <section id="editor" class="editor-pane">
-        <div class="empty">Soldan bir kayıt seçin ya da <b>+ Yeni</b> ile ekleyin.</div>
-      </section>
-    </main>
+    <main id="main" class="main"></main>
   </div>
 
   <div id="modal-root"></div>
