@@ -21,7 +21,7 @@ jobs:
       - name: Yayın dosyalarını topla
         run: |
           mkdir -p _site/data
-          cp -r index.html katki-modal.css katki-modal.js assets .htaccess _site/
+          cp -r index.html katki-modal.css katki-modal.js assets panel .htaccess _site/
           cp data/tmdb-cache.json _site/data/
 
       - name: deploy dalına aktar

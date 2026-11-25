@@ -19,8 +19,17 @@
 │       ├── ui.js
 │       ├── app.js
 │       └── init.js
-└── data/
-    └── tmdb-cache.json
+├── data/
+│   └── tmdb-cache.json
+├── panel/                  # veri giriş/düzenleme paneli → /panel/
+│   ├── index.html
+│   ├── config.js           # API adresi, sütun tipleri (data.js indeksleriyle aynı)
+│   ├── adapters.js         # veri katmanı (Sheets; ileride REST)
+│   ├── panel.js
+│   └── panel.css
+└── apps-script/
+    ├── panel-api.gs        # panelin Sheets API'si (ayrı Apps Script projesi)
+    └── README.md           # panel kurulumu
 ```
 
 ---
@@ -36,6 +45,7 @@
 | `ui.js` | Mekan listesi render (alfabetik), film accordion render, filtre uygulama, `eSelectLoc()`, `_clearLocSelectionState()` |
 | `app.js` | Chip üretimi (mekan kategorisi, decade, tür), filtre setter fonksiyonları (`eSetGenre`, `eSetDecade`, `eSetYabanci`), kayan segment indicator, arama (search) mantığı, tema toggle |
 | `init.js` | `initApp()`, `attachMapRedraw()`, scroll/resize event listener'ları |
+| `panel/` | Filmler, Mekanlar, Görseller için ekleme/düzenleme/silme paneli (`/panel/`). Kurulum: `apps-script/README.md` |
 
 ---
 
