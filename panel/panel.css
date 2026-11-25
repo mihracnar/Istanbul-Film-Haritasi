@@ -271,3 +271,4 @@ a { color: inherit; }
   .film-links { columns: 1; }
   .d-head { flex-wrap: wrap; }
 }
+.skipped { margin: -4px 0 16px; font-size: 11.5px; }
