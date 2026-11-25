@@ -180,6 +180,10 @@
         ['M007', 'Kız Kulesi', 'Anıt', '41.0211, 29.0041', 'Üsküdar', ''],
         ['M008', 'Cihangir', 'Semt', '', 'Beyoğlu', ''],
         ['M009', 'Eski Galata Köprüsü', 'Ulaşım', '41.0225, 28.9580', 'Fatih', '1'],
+        ['', 'Arnavut Hayrettin Bey Köşkü', '', '', '', ''],
+        // boş satırlar (kayıp eser sütununda kalmış değerler dahil — içerik sayılmaz)
+        ['', '', '', '', '', ''],
+        ['', '', '', '', '', '0'],
       ],
     },
     {
