@@ -159,6 +159,11 @@
         ['F003', 'Selvi Boylum Al Yazmalım', 'Yerli', 'Atıf Yılmaz', 'Dram', '1977', 'Karaköy Rıhtımı', 'Demo kaydı.', '', '0'],
         ['F004', 'Uzak', 'Yerli', 'Nuri Bilge Ceylan', 'Dram', '2002', 'Cihangir, Galata Köprüsü', 'Demo kaydı.', '', '0'],
         ['F005', 'Kanlı Mezar', 'Yerli', 'Türker İnanoğlu', '', '1968', 'Eminönü, Galata Köprüsü', 'Demo kaydı: türü boş olduğu için haritada görünmez.', '', '0'],
+        ['', 'Numarasız Film', 'Yerli', '', 'Dram', '1970', 'Cihangir', 'Demo kaydı: A sütunu boş.', '', '0'],
+        // formülü aşağı uzatılmış boş satırlar (panel bunları yok sayar)
+        ['', '', '', '', '', '', '', '', '', '0'],
+        ['', '', '', '', '', '', '', '', '', '0'],
+        ['', '', '', '', '', '', '', '', '', '0'],
       ],
     },
     {

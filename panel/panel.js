@@ -27,7 +27,8 @@
     saving: false,
     maps: [],
     cache: null,
-    gorselCol0: 'none',           // Görseller A sütunu: auto (kimlik) | filmId | none
+    gorselCol0: 'none',
+    skipped: {},                  // sayfa → yok sayılan boş satır sayısı           // Görseller A sütunu: auto (kimlik) | filmId | none
   };
 
   // ================================================================ yardımcılar
@@ -122,8 +123,22 @@
 
   // ================================================================ tablolar
   const T = name => S.tables[name];
-  const keyOf = (t, r) => (t.hasIds ? r[0] : '#' + r.__row);
-  const refOf = (t, r) => (t.hasIds ? { id: r[0] } : { row: r.__row });
+  // Kimlikli sayfada A sütunu boşsa kayıt satır numarasıyla tanınır (aynı anahtarı paylaşmasın)
+  const keyOf = (t, r) => (t.hasIds && collapse(r[0]) ? r[0] : '#' + r.__row);
+  const refOf = (t, r) => (t.hasIds && collapse(r[0]) ? { id: r[0] } : { row: r.__row });
+  const keyLabel = (t, r) => (collapse(r[0]) || 'numarasız');
+  /** Sıradaki kimlik (F1148, M951 …): mevcut en büyük numara + 1, aynı hane sayısıyla */
+  function nextId(t) {
+    let prefix = t.name === F.sheet ? 'F' : t.name === M.sheet ? 'M' : '', width = 3, max = 0;
+    t.rows.forEach(r => { const m = ID_RE.exec(collapse(r[0])); if (m) { prefix = m[1]; width = Math.max(width, m[2].length); max = Math.max(max, +m[2]); } });
+    return prefix + String(max + 1).padStart(width, '0');
+  }
+  // İçerik sütunları: bunların hepsi boşsa satır "boş satır" sayılır (formülü aşağı uzatılmış satırlar)
+  const CONTENT_COLS = {
+    [F.sheet]: [F.id, F.title, F.origin, F.director, F.genre, F.year, F.places, F.desc, F.origTitle],
+    [M.sheet]: [M.id, M.name, M.category, M.coord, M.district],
+    [G.sheet]: [G.film, G.place, G.url],
+  };
   const fullExpected = (t, r) => Object.fromEntries(r.map((v, i) => [i, v]).filter(([i]) => !t.formulaCols.has(i) && i < t.headers.length));
 
   function prepareTables(raw) {
@@ -136,6 +151,13 @@
         rows: src.rows.map((r, i) => { const a = r.slice(); a.__row = src.rowNums ? src.rowNums[i] : i + 2; return a; }),
       };
       t.rows.forEach(r => { while (r.length < t.headers.length) r.push(''); });
+      const cc = (CONTENT_COLS[t.name] || []).filter(i => !t.formulaCols.has(i));
+      if (cc.length) {
+        const before = t.rows.length;
+        t.rows = t.rows.filter(r => cc.some(i => collapse(r[i])));
+        S.skipped[t.name] = before - t.rows.length;
+        if (S.skipped[t.name]) console.info(`[panel] ${t.name}: içeriği boş ${S.skipped[t.name]} satır yok sayıldı`);
+      }
       t.hasIds = t.name === F.sheet || t.name === M.sheet || detectIds(t);
       reindex(t);
       S.tables[t.name] = t;
@@ -221,6 +243,7 @@
   function filmIssues(r) {
     const out = [];
     const title = collapse(r[F.title]);
+    if (!/^F\d/.test(collapse(r[F.id]))) out.push({ text: 'Film numarası yok (kaydedince verilir)', hide: true });
     if (!title) out.push({ text: 'Film adı boş', hide: true });
     if (!collapse(r[F.genre])) out.push({ text: 'Tür boş', hide: true });
     const parts = splitList(r[F.places]).filter(p => norm(p).length >= CFG.PLACE_MIN_LEN);
@@ -235,6 +258,7 @@
   }
   function mekanIssues(r) {
     const out = [];
+    if (!/^M\d/.test(collapse(r[M.id]))) out.push({ text: 'Mekan numarası yok (kaydedince verilir)', hide: true });
     if (!collapse(r[M.name])) out.push({ text: 'Mekan adı boş', hide: true });
     if (!collapse(r[M.category])) out.push({ text: 'Kategori boş', hide: true });
     const c = coordsOf(r[M.coord]);
@@ -411,6 +435,7 @@
         kpi(mt.rows.length - mekanHidden.length, mt.rows.length, 'mekan haritada', mekanHidden.length ? `${mekanHidden.length} mekanın konumu ya da kategorisi eksik` : 'hepsi görünüyor'),
         kpi(visImgs.length, gt.rows.length, 'görsel yayında', `${ft.rows.length - noImg.length} filmin görseli var`),
         kpi(unmatched.length, null, 'eşleşmeyen yer adı')),
+      skippedNote(),
       h('div', { class: 'card' }, h('h3', null, 'Yapılacaklar'),
         h('ul', { class: 'todo' },
           todo(filmsHidden.length, 'film haritada görünmüyor (tür ya da çekim yeri eksik)', () => go('film', null, { filter: 'hidden' })),
@@ -419,6 +444,11 @@
           todo(orphans.length, 'görselin filmi bulunamıyor (film adı eşleşmiyor)', () => go('gorsel', null, { filter: 'orphan' })),
           todo(dupFilms.length, 'film aynı adı taşıyor (görselleri karışır)', () => go('film', null, { filter: 'dup' })))),
       um));
+  }
+
+  function skippedNote() {
+    const parts = Object.entries(S.skipped).filter(([, n]) => n).map(([k, n]) => `${k}: ${n}`);
+    return parts.length ? h('p', { class: 'muted skipped' }, `Tabloda içeriği tamamen boş satırlar yok sayıldı (${parts.join(', ')}). Bunlar genelde formülü aşağıya kadar uzatılmış satırlardır; tablodan silinebilirler.`) : null;
   }
 
   // ================================================================ LİSTE + DETAY
@@ -585,7 +615,7 @@
 
     const head = h('div', { class: 'd-head' },
       h('div', { class: 'd-title' },
-        h('div', { class: 'kicker' }, creating ? `Yeni ${ENT_LABEL[ent].one}` : `${ENT_LABEL[ent].One} · ${S.sel.rowObj[0]}`),
+        h('div', { class: 'kicker' }, creating ? `Yeni ${ENT_LABEL[ent].one}` : `${ENT_LABEL[ent].One} · ${keyLabel(t, S.sel.rowObj)}`),
         h('h2', { id: 'd-h2' }, collapse(draft[titleCol]) || (creating ? `Yeni ${ENT_LABEL[ent].one}` : '—')),
         h('div', { id: 'd-status' })),
       h('div', { class: 'd-actions' },
@@ -615,7 +645,7 @@
     const ch = changedCols();
     $$('#detail [data-col]').forEach(f => f.classList.toggle('changed', ch.includes(+f.dataset.col)));
     const note = $('#dirty-note'); if (note) note.textContent = ch.length ? 'Kaydedilmemiş değişiklik var' : '';
-    const sv = $('#btn-save'); if (sv) sv.disabled = S.saving || (S.sel.mode === 'edit' && !ch.length);
+    const sv = $('#btn-save'); if (sv) sv.disabled = S.saving || (S.sel.mode === 'edit' && !ch.length && !!collapse(S.sel.original[0]));
     const rv = $('#btn-revert'); if (rv && S.sel.mode === 'edit') rv.disabled = !ch.length;
     const h2 = $('#d-h2'); const tc = ent === 'film' ? F.title : M.name;
     if (h2) h2.textContent = collapse(draft[tc]) || (S.sel.mode === 'create' ? `Yeni ${ENT_LABEL[ent].one}` : '—');
@@ -1277,7 +1307,8 @@
       const films = X().filmsByPlace.get(k) || [];
       films.forEach(f => {
         const parts = splitList(f[F.places]).map(p => (norm(p) === k ? collapse(newName) : p));
-        ops.push({ sheet: F.sheet, id: f[F.id], changes: { [F.places]: joinList(parts) }, expected: { [F.places]: f[F.places] }, _row: f });
+        const fr = refOf(ft, f);
+        ops.push(Object.assign({ sheet: F.sheet, changes: { [F.places]: joinList(parts) }, expected: fr.id != null ? { [F.places]: f[F.places] } : fullExpected(ft, f), _row: f }, fr));
       });
       const imgs = X().imagesByPlace.get(k) || [];
       imgs.forEach(g => ops.push({ sheet: G.sheet, ...refOf(gt, g), changes: { [G.place]: collapse(newName) }, expected: fullExpected(gt, g), _row: g }));
@@ -1293,7 +1324,7 @@
     const t = T(entTable(ent));
     const nameCol = ent === 'film' ? F.title : M.name;
     const cols = changedCols();
-    if (mode === 'edit' && !cols.length) return true;
+    if (mode === 'edit' && !cols.length && collapse(original[0])) return true;
     if (!collapse(draft[nameCol])) { toast(ent === 'film' ? 'Film adı gerekli.' : 'Mekan adı gerekli.', 'err'); $('#f' + nameCol).focus(); return false; }
     // aynı ad uyarısı
     const dupList = ent === 'film' ? (X().filmByTitle.get(collapse(draft[nameCol])) || []) : (X().mekanByNorm.get(norm(draft[nameCol])) || []);
@@ -1327,14 +1358,21 @@
       } else {
         const changes = {}, expected = {};
         cols.forEach(i => { changes[i] = draft[i]; expected[i] = original[i]; });
-        const main = { sheet: t.name, id: original[0], changes, expected };
+        const ref = refOf(t, S.sel.rowObj);
+        let main;
+        if (ref.id != null) main = Object.assign({ sheet: t.name, changes, expected }, ref);
+        else {
+          // numarasız kayıt: satır numarasıyla yaz, tüm satırı karşılaştır, sıradaki numarayı ver
+          if (!t.formulaCols.has(0)) changes[0] = nextId(t);
+          main = Object.assign({ sheet: t.name, changes, expected: fullExpected(t, original) }, ref);
+        }
         let fresh;
         if (cascade.ops.length) {
           const res = await S.adapter.batch([main, ...cascade.ops.map(o => { const c = Object.assign({}, o); delete c._row; return c; })]);
           fresh = replaceRow(t, S.sel.rowObj, res.results[0].row, res.results[0].rowNum);
           cascade.ops.forEach((o, i) => { const r2 = res.results[i + 1]; replaceRow(T(o.sheet), o._row, r2.row, r2.rowNum); });
         } else {
-          const res = await S.adapter.update(t.name, { id: original[0] }, changes, expected);
+          const res = await S.adapter.update(t.name, ref, main.changes, main.expected);
           fresh = replaceRow(t, S.sel.rowObj, res.row, res.rowNum);
         }
         S.saving = false;
@@ -1376,13 +1414,13 @@
       const n = filmsOfPlace(original).length;
       if (n) notes.push(`${n} filmin çekim yeri listesinde bu ad geçiyor; bu filmlerde yer eşleşmesiz kalır.`);
     }
-    const ok = await confirmBox(ENT_LABEL[ent].del, [`${original[0]} · ${collapse(original[nameCol])} kalıcı olarak silinecek. İşlem kayıt defterine (_Panel_Log) yazılır.`, ...notes], 'Sil', true);
+    const ok = await confirmBox(ENT_LABEL[ent].del, [`${keyLabel(t, rowObj)} · ${collapse(original[nameCol]) || '(adsız)'} kalıcı olarak silinecek. İşlem kayıt defterine (_Panel_Log) yazılır.`, ...notes], 'Sil', true);
     if (!ok) return;
     try {
-      const res = await S.adapter.remove(t.name, { id: original[0] }, fullExpected(t, original));
+      const res = await S.adapter.remove(t.name, refOf(t, rowObj), fullExpected(t, original));
       dropRow(t, rowObj, res.rowNum);
       S.sel = null;
-      toast(`${original[0]} silindi.`, 'ok');
+      toast(`${keyLabel(t, rowObj)} silindi.`, 'ok');
       renderNav(); renderList(ent); renderEmptyDetail(ent); setHash();
     } catch (e) {
       if (e.code === 'conflict') toast('Kayıt bu arada değişmiş; Yenile ile güncel hâlini alın.', 'err');
