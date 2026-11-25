@@ -1,67 +1,59 @@
 /**
- * Veri Paneli — yapılandırma
- * Şema sunucudan okunur; sütun anlamları haritanın data.js'indeki indekslerle aynıdır.
+ * İçerik Paneli — yapılandırma
+ * Sütun indeksleri haritanın assets/js/data.js'indeki okuma sırasıyla birebir aynıdır.
+ * Buradaki tanımda olmayan sütunlar film/mekan sayfasında "Diğer alanlar" altında gösterilir.
  */
 window.PANEL_CONFIG = {
-  // Veri katmanı: 'sheets' (Apps Script) | ileride 'rest' (PostGIS API)
   ADAPTER: 'sheets',
-
-  // panel-api.gs dağıtımının /exec adresi (apps-script/panel-api.gs → Dağıt → Web uygulaması)
   API_URL: 'https://script.google.com/macros/s/AKfycbzdulhSv1aqxo9hQUDqbcDYj2xH4yKkBUZH482bRcmDA6ykp36lisMONGpixt2T5Vaa/exec',
 
   BASEMAP_STYLE: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   MAP_CENTER: [28.975, 41.015],
   MAP_ZOOM: 11,
+  // Konum araması (OpenStreetMap Nominatim) — İstanbul kutusuyla sınırlı
+  GEOCODER: 'https://nominatim.openstreetmap.org/search',
+  ISTANBUL_BBOX: [27.9, 40.75, 29.95, 41.65],
 
-  /**
-   * Sütun tipleri — data.js ile aynı indeksler. Burada olmayan sütunlar otomatik tanınır.
-   * Tipler: id, text, longtext, enum, year, coord ("enlem, boylam"), lat, lon,
-   *         image, status (1 / boş / x), flag (1 / boş), places, link:<Sayfa>, readonly
-   */
-  FIELD_OVERRIDES: {
-    Filmler: {
-      0: 'id', 1: 'text', 2: 'enum', 3: 'text', 4: 'text',
-      5: 'year', 6: 'places', 7: 'longtext', 8: 'text',
-    },
-    Mekanlar: {
-      0: 'id', 1: 'text', 2: 'enum', 3: 'coord', 4: 'enum', 5: 'flag',
-    },
-    Görseller: {
-      1: 'link:Filmler', 2: 'link:Mekanlar', 3: 'image', 4: 'status',
-    },
-  },
-
-  /**
-   * Boşsa harita kaydı eler (data.js): film → Türü boş ya da hiç yer eşleşmiyor;
-   * mekan → kategori boş ya da koordinat yok. Panel bunları "sorunlu" işaretler.
-   */
-  REQUIRED: { Filmler: [1, 4, 6], Mekanlar: [1, 2, 3], Görseller: [1, 3] },
-
-  // Her sayfanın "ad" sütunu (liste başlığı, bağlantı hedefi)
-  LABEL_COL: { Filmler: 1, Mekanlar: 1, Görseller: 1 },
-
-  /**
-   * Filmler.Çekildiği Yer (r[6]) ↔ Mekanlar adı (r[1]) — virgülle ayrılmış liste.
-   * Harita: matchLocs() → normStr eşitliği, 3 karakterden kısa parçalar yok sayılır.
-   */
-  PLACES: {
+  // --- Filmler (data.js: r[0]…r[8])
+  FILM: {
     sheet: 'Filmler',
-    target: 'Mekanlar',
-    targetCol: 1,
-    separator: ',',
-    joiner: ', ',
-    minLen: 3,
+    id: 0, title: 1, origin: 2, director: 3, genre: 4, year: 5, places: 6, desc: 7, origTitle: 8,
+    origins: ['Yerli', 'Yabancı'],
   },
 
-  /**
-   * Ad üzerinden bağlar (link:<Sayfa>) nasıl eşleşir:
-   *  exact → boşluklar sadeleştirilmiş birebir eşitlik (harita: gorselMap[film adı])
-   *  norm  → normalizeName eşitliği
-   */
-  LINK_MATCH: {
-    'Görseller:1': 'exact',
-    'Görseller:2': 'norm',
+  // --- Mekanlar (data.js: r[0]…r[5]); koordinat tek hücrede "enlem, boylam"
+  MEKAN: {
+    sheet: 'Mekanlar',
+    id: 0, name: 1, category: 2, coord: 3, district: 4, lost: 5,
   },
+
+  // --- Görseller (data.js loadGorseller: r[1] film adı, r[2] mekan, r[3] URL, r[4] durum)
+  GORSEL: {
+    sheet: 'Görseller',
+    film: 1, place: 2, url: 3, status: 4,
+  },
+
+  STATUS: [
+    { v: '1', label: 'Öncelikli', short: '★' },
+    { v: '', label: 'Normal', short: '' },
+    { v: 'x', label: 'Gizli', short: 'gizli' },
+  ],
+
+  // Çekim yeri listesi: virgülle ayrılır; harita 3 karakterden kısa parçaları yok sayar
+  LIST_SEPARATOR: ',',
+  LIST_JOINER: ', ',
+  PLACE_MIN_LEN: 3,
+
+  // Yüklenen görseller: uzun kenar en fazla bu kadar piksele küçültülür, JPEG kalitesi
+  UPLOAD_MAX_PX: 2400,
+  UPLOAD_QUALITY: 0.88,
+  UPLOAD_MAX_MB: 25,
+
+  ILCELER: ['Adalar', 'Arnavutköy', 'Ataşehir', 'Avcılar', 'Bağcılar', 'Bahçelievler', 'Bakırköy', 'Başakşehir',
+    'Bayrampaşa', 'Beşiktaş', 'Beykoz', 'Beylikdüzü', 'Beyoğlu', 'Büyükçekmece', 'Çatalca', 'Çekmeköy',
+    'Esenler', 'Esenyurt', 'Eyüpsultan', 'Fatih', 'Gaziosmanpaşa', 'Güngören', 'Kadıköy', 'Kağıthane',
+    'Kartal', 'Küçükçekmece', 'Maltepe', 'Pendik', 'Sancaktepe', 'Sarıyer', 'Silivri', 'Sultanbeyli',
+    'Sultangazi', 'Şile', 'Şişli', 'Tuzla', 'Ümraniye', 'Üsküdar', 'Zeytinburnu'],
 
   /** Haritadaki normStr (assets/js/data.js) ile BİREBİR aynı olmalı. */
   normalizeName(s) {
@@ -73,21 +65,5 @@ window.PANEL_CONFIG = {
       .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
   },
 
-  // Yalnızca override'ı olmayan sütunlar için başlık ipuçları
-  HINTS: [
-    { re: /^(enlem|lat|latitude)$/i, type: 'lat' },
-    { re: /^(boylam|lon|lng|longitude)$/i, type: 'lon' },
-    { re: /koordinat|konum/i, type: 'coord' },
-    { re: /(url|link|bağlantı|baglanti|drive)/i, type: 'image' },
-    { re: /(açıklama|aciklama|özet|ozet|not(lar)?$)/i, type: 'longtext' },
-    { re: /(yıl|yil)/i, type: 'year' },
-  ],
-
-  STATUS_VALUES: [
-    { v: '1', label: 'Öncelikli' },
-    { v: '', label: 'Normal' },
-    { v: 'x', label: 'Hariç' },
-  ],
-
-  LIST_PAGE: 200,
+  PAGE_SIZE: 120,
 };

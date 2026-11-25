@@ -5,7 +5,9 @@
  *   load()                                → { editor, tables: [{ name, headers, formulaCols, rows, rowNums }] }
  *   update(table, ref, changes, expected) → { row, rowNum }
  *   create(table, values, opts)           → { row, rowNum }     opts.autoId → sunucu kimlik üretir
- *   remove(table, ref, expected)          → { rowNum }
+ *   remove(table, ref, expected, opts)    → { rowNum }      opts.trashFile + opts.urlCol → Drive dosyası da çöpe
+ *   batch(ops)                            → { results: [{ sheet, row, rowNum }] }   ops: [{ sheet, id|row, changes, expected }]
+ *   upload(table, file, values, opts)     → { row, rowNum, url, shared }  file: { name, mimeType, data(base64) }
  *
  *   ref      : { id }  kimlik sütunu olan sayfalarda  |  { row } satır numarasıyla
  *   changes  : { sütunİndeksi: yeniDeğer }
@@ -57,7 +59,11 @@
     load() { return this.call('load', {}); }
     update(table, ref, changes, expected) { return this.call('update', Object.assign({ sheet: table, changes, expected }, ref)); }
     create(table, values, opts) { return this.call('create', { sheet: table, values, autoId: !!(opts && opts.autoId) }); }
-    remove(table, ref, expected) { return this.call('delete', Object.assign({ sheet: table, expected }, ref)); }
+    remove(table, ref, expected, opts) { return this.call('delete', Object.assign({ sheet: table, expected }, ref, opts || {})); }
+    batch(ops) { return this.call('batch', { ops }); }
+    upload(table, file, values, opts) {
+      return this.call('upload', Object.assign({ sheet: table, fileName: file.name, mimeType: file.mimeType, data: file.data, values }, opts || {}));
+    }
   }
 
   // ------------------------------------------------------------ Demo (bellek içi, ?demo)
@@ -119,6 +125,24 @@
       t.rows.splice(i, 1);
       return { rowNum: i + 2 };
     }
+    async batch(ops) {
+      await this.wait();
+      const prepared = ops.map(op => {
+        const t = this.t(op.sheet), i = this.idx(t, op);
+        this.check(t.rows[i], op.expected);
+        return { t, i, op };
+      });
+      return { results: prepared.map(({ t, i, op }) => {
+        for (const k in op.changes) t.rows[i][k] = String(op.changes[k]);
+        return { sheet: op.sheet, row: t.rows[i].slice(), rowNum: i + 2 };
+      }) };
+    }
+    async upload(table, file, values, opts) {
+      await this.wait();
+      const url = 'data:' + file.mimeType + ';base64,' + file.data; // demo: dosya bellekte kalır
+      const res = await this.create(table, Object.assign({}, values, { [opts.urlCol]: url }), opts);
+      return Object.assign(res, { url, shared: true });
+    }
     // test kolaylığı: başka bir kullanıcının değişikliğini taklit eder
     _external(table, rowIndex, col, value) { this.t(table).rows[rowIndex][col] = value; }
   }
@@ -134,6 +158,7 @@
         ['F002', 'Ölümsüz Kadın', 'Yabancı', 'Alain Robbe-Grillet', 'Dram, Gerilim', '1963', 'İstinye Koyu, Zeyrek Mahallesi, Yeni Camii, Kiz Kulesi, Galata Köprüsü, Bukoleon', 'Demo kaydı.', "L'Immortelle", '1'],
         ['F003', 'Selvi Boylum Al Yazmalım', 'Yerli', 'Atıf Yılmaz', 'Dram', '1977', 'Karaköy Rıhtımı', 'Demo kaydı.', '', '0'],
         ['F004', 'Uzak', 'Yerli', 'Nuri Bilge Ceylan', 'Dram', '2002', 'Cihangir, Galata Köprüsü', 'Demo kaydı.', '', '0'],
+        ['F005', 'Kanlı Mezar', 'Yerli', 'Türker İnanoğlu', '', '1968', 'Eminönü, Galata Köprüsü', 'Demo kaydı: türü boş olduğu için haritada görünmez.', '', '0'],
       ],
     },
     {
