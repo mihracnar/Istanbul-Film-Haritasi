@@ -262,8 +262,8 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
   flex-shrink:0;
   overflow:visible;position:relative;z-index:800;
 }
-#cE .sw-d{width:9px;height:9px;background:#f03010;border-radius:50%;flex-shrink:0}
-#cE .sw-s{font-size:26px;font-weight:500;line-height:1;color:#000;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;padding-top:3px}
+#cE .sw-d{width:8px;height:8px;background:#f03010;border-radius:50%;flex-shrink:0}
+#cE .sw-s{font-size:20px;font-weight:400;line-height:1;color:#222;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;padding-top:2px}
 
 /* ── Body ── */
 #cE .body{flex:1;display:flex;overflow:hidden;min-height:0}
@@ -1009,7 +1009,7 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 
   #cE .top { height: 110px; padding: 0 20px; gap: 14px; overflow: hidden; }
   #eLogoImg { height: 64px !important; flex-shrink: 0; }
-  #cE .sw-s { font-size: 36px; letter-spacing: .4px; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #cE .sw-s { font-size: 28px; letter-spacing: .4px; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #cE .sw-d { width: 10px; height: 10px; flex-shrink: 0; }
   #cE .e-counts { font-size: 14px; line-height: 1.5; flex-shrink: 0; padding: 0 8px; }
 
