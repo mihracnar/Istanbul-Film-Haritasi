@@ -645,7 +645,6 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 ══════════════════════════════════════════════ */
 @media (max-width:640px){
   #infobar{display:none}
-  #conn-svg{display:none}
 
   /* ── Top bar ── */
   #cE .top{height:52px;padding:0 14px;gap:10px}
@@ -743,10 +742,9 @@ hr.mp-divider{border:none;border-top:1px solid;margin:0}
 }
 
 /* ══════════════════════════════════════════════
-   DESKTOP PANEL OVERLAY — GeoJSON conn lines için kritik
+   DESKTOP PANEL OVERLAY
    Paneller haritanın ÜZERINE position:absolute
-   → Film satırı koordinatları harita konteyneri içinde kalır
-   → map.unproject() düzgün çalışır
+   (harita tam alanı kaplar, paneller üstünde durur)
 ══════════════════════════════════════════════ */
 @media (min-width: 641px) {
   /* Body: relative positioning context */

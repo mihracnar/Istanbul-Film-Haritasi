@@ -5,12 +5,6 @@
    ════════════════════════════════════════════════════════════ */
 
 function attachMapRedraw(theme, m){
-  // Pan/zoom sırasında bağlantı çizgilerini güncelle
-  // (target nokta screen-space'de kayıyor → yeni geo hesap gerekir)
-  m.on('move', ()=>{
-    liveUpdateConn(theme);
-  });
-
   // Label collision detection — MapLibre native, JS guard gerekmez
   // Zoom animasyonu bitişi yok artık — MapLibre kendi yönetiyor
 }
@@ -73,23 +67,8 @@ async function initApp(){
 
 initApp();
 
-// Resize'da bağlantı çizgilerini temizle
+// Resize'da köken seçici göstergesini yeniden konumla
 window.addEventListener('resize', ()=>{
-  clearConnLines();
   const onBtn = document.querySelector('#eOriginChips .e-origin-seg.on');
   if(onBtn) _eOriginIndicatorMove(onBtn);
-});
-
-// Film paneli scroll'unda bağlantı çizgilerini güncelle
-window.addEventListener('scroll', e=>{
-  if(e.target && e.target.id === 'eFilms'){
-    requestAnimationFrame(()=>liveUpdateConn('E'));
-  }
-}, true);
-
-// Panel scroll event'lerini dinle
-const PANEL_SCROLL_MAP = { eLocs:'E', eFilms:'E' };
-Object.entries(PANEL_SCROLL_MAP).forEach(([elId, theme])=>{
-  const el = document.getElementById(elId);
-  if(el) el.addEventListener('scroll', ()=>requestAnimationFrame(()=>liveUpdateConn(theme)));
 });

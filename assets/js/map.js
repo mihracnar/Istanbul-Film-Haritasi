@@ -1,8 +1,7 @@
 /* ════════════════════════════════════════════════════════════
-   İSTANBUL FİLM MEKANLARI HARİTASI — map.js  (MapLibre Hybrid)
+   SİNEMADA İSTANBUL — map.js  (MapLibre Hybrid)
    Base map: MapLibre GL JS (WebGL tiles)
    Pins:     maplibregl.Marker + HTML (orijinal tasarım)
-   Conn:     SVG overlay (#conn-svg)
    Highlight: DOM manipulation
    Port notu: Leaflet latLngToContainerPoint → MapLibre project([lng,lat])
    ════════════════════════════════════════════════════════════ */
@@ -23,7 +22,6 @@ const markers = {};
 const inited  = { E:false };
 const hlLayers = {};
 const selLayers = {};
-let activeConns = {};
 // Pin seçim takibi
 const _selPinIds = new Set();
 let _currentVisFilter = null;
@@ -77,9 +75,6 @@ async function openMedia(filmId){
   document.querySelector('#cE .e-fp').style.visibility='hidden';
   eOpenDecadesForFilms([filmId]);
   const bar=document.getElementById('eLocBar'); if(bar) bar.style.display='none';
-  clearConnLines();
-  if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
-  if(window._connMoveEnd && maps['E']){ maps['E'].off('moveend',window._connMoveEnd); window._connMoveEnd=null; }
   clearSelLayers(); highlightFilmOnMap('E',filmId);
   const gorsel = getGorsellerForFilm(f.title);
   document.getElementById('mpDesc').textContent = f.desc || '—';
@@ -120,9 +115,7 @@ function closeMedia(){
   if (window.DEBUG_CLICK) console.log(`[ui] closeMedia${currentFilm ? ` (was F${currentFilm.id})` : ''}`);
   document.getElementById('mp').classList.remove('open');
   const fp=document.querySelector('#cE .e-fp'); if(fp) fp.style.visibility='';
-  if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
-  if(window._connMoveEnd && maps['E']){ maps['E'].off('moveend',window._connMoveEnd); window._connMoveEnd=null; }
-  clearHighlights(); clearSelLayers(); clearConnLines();
+  clearHighlights(); clearSelLayers();
   if(window.innerWidth<=640){
     if(_mPrevLoc){ eActiveLoc=_mPrevLoc; ePinHighlight(_mPrevLoc,true); _mPrevLoc=null; }
     if(_mPrevSheet&&window.mSetTab){ const tabId=_mPrevSheet==='filmler'?'mTabFilmler':'mTabMekanlar'; window.mSetTab(_mPrevSheet,document.getElementById(tabId)); _mPrevSheet=null; }
@@ -171,7 +164,6 @@ function closeGalleryBar(theme){
   if(el) el.style.display='none';
   if(theme==='E') requestAnimationFrame(()=>maps.E?.resize());
   clearSelLayers();
-  clearConnLines();
   document.querySelectorAll(`#c${theme} .fl,#c${theme} .rp-film,#c${theme} .o-fl,#c${theme} .e-film-row`).forEach(e=>e.classList.remove('on'));
   // Mekan filtresini temizle
   eActiveLoc = null;
@@ -202,7 +194,6 @@ function selectLoc(theme,id){
 /* ══════════════════════════════════════════════
    MAP YARATMA — MapLibre GL JS
    Pins: Symbol Layer (text-background-color, MapLibre 3.3+)
-   Conn: GeoJSON LineLayer — panel koordinatı map-container-relative
    ══════════════════════════════════════════════ */
 function _isMapReady(m){ return m && inited.E && !!m.getSource('locs'); }
 
@@ -277,37 +268,10 @@ function _setupEMapSources(m){
     data: { type: 'FeatureCollection', features: locFeatures }
   });
 
-  m.addSource('conn-lines', {
-    type: 'geojson',
-    data: { type:'FeatureCollection', features:[] }
-  });
-  m.addSource('conn-dots', {
-    type: 'geojson',
-    data: { type:'FeatureCollection', features:[] }
-  });
 
 }
 
 function _setupEMapLayers(m){
-  // 1. Bağlantı çizgileri — GeoJSON LineLayer
-  m.addLayer({
-    id:'conn-lines-layer', type:'line', source:'conn-lines',
-    paint:{
-      'line-color':'#f03010',
-      'line-width': 1.5,
-      'line-opacity': 0.6,
-      'line-dasharray':[5,4],
-    }
-  });
-  // 2. Bağlantı uç noktaları
-  m.addLayer({
-    id:'conn-dots-layer', type:'circle', source:'conn-dots',
-    paint:{
-      'circle-radius': 2.5,
-      'circle-color': '#f03010',
-      'circle-opacity': 0.7,
-    }
-  });
   // 3. Pin nokta
   m.addLayer({
     id: 'locs-dots', type: 'circle', source: 'locs',
@@ -374,8 +338,6 @@ function _setupEMapLayers(m){
 
 function _resetAllFilters(m){
   if (window.DEBUG_CLICK) console.log('[map] boş alan tıklandı — sıfırla');
-  if(window._connTimer){ clearTimeout(window._connTimer); window._connTimer=null; }
-  clearConnLines();
   if(document.getElementById('mp').classList.contains('open')) closeMedia();
   const locBar = document.getElementById('eLocBar');
   if(locBar) { locBar.style.display='none'; locBar.innerHTML=''; }
@@ -594,86 +556,6 @@ function clearHighlights(){
 function clearSelLayers(){}
 
 /* ══════════════════════════════════════════════
-   BAĞLANTI ÇİZGİLERİ — GeoJSON LineLayer
-   ══════════════════════════════════════════════ */
-
-function _bezierToGeo(m, sx, sy, tx, ty, steps){
-  steps = steps || 20;
-  const dx  = tx - sx;
-  const dy  = ty - sy;
-  const cx1 = sx + dx * 0.2, cy1 = sy + dy * 0.8;  // pinden hemen film satırı yönüne → fan
-  const cx2 = tx - 80,        cy2 = ty;              // uzun yatay yaklaşım → panele dik giriş
-  const coords = [];
-  for(let i = 0; i <= steps; i++){
-    const t = i/steps, mt = 1-t;
-    const px = mt*mt*mt*sx + 3*mt*mt*t*cx1 + 3*mt*t*t*cx2 + t*t*t*tx;
-    const py = mt*mt*mt*sy + 3*mt*mt*t*cy1 + 3*mt*t*t*cy2 + t*t*t*ty;
-    const geo = m.unproject([px, py]);
-    coords.push([geo.lng, geo.lat]);
-  }
-  return coords;
-}
-
-function _updateConnGeo(theme){
-  const conn = activeConns[theme]; if(!conn || !conn.locId) return;
-  const loc = LOC_MAP[conn.locId], m = maps[theme];
-  if(!loc || !m || !_isMapReady(m)) return;
-  const mapEl = document.getElementById('map'+theme); if(!mapEl) return;
-  const mapRect = mapEl.getBoundingClientRect();
-  const srcPt = m.project([loc.lng, loc.lat]);
-  const sx = srcPt.x, sy = srcPt.y;
-  const lineFeatures = [], dotFeatures = [];
-  loc.films.forEach(fid=>{
-    const filmEl = document.getElementById('eFilm'+fid); if(!filmEl) return;
-    const r = filmEl.getBoundingClientRect();
-    if(r.width===0 || r.height===0) return;
-    const tx = r.left - mapRect.left + 5;
-    const ty = r.top  - mapRect.top  + r.height * 0.5;
-    lineFeatures.push({ type:'Feature', geometry:{ type:'LineString', coordinates:_bezierToGeo(m,sx,sy,tx,ty) } });
-    const tGeo = m.unproject([tx, ty]);
-    dotFeatures.push({ type:'Feature', geometry:{ type:'Point', coordinates:[tGeo.lng, tGeo.lat] } });
-  });
-  try {
-    m.getSource('conn-lines').setData({ type:'FeatureCollection', features:lineFeatures });
-    m.getSource('conn-dots').setData({ type:'FeatureCollection', features:dotFeatures });
-  } catch(e){}
-}
-
-function clearConnLines(){
-  Object.keys(_connRaf).forEach(k=>{
-    if(_connRaf[k]){ cancelAnimationFrame(_connRaf[k]); _connRaf[k]=null; }
-  });
-  activeConns = {};
-  const m = maps['E'];
-  if(m && _isMapReady(m)){
-    const empty = { type:'FeatureCollection', features:[] };
-    try { m.getSource('conn-lines').setData(empty); } catch(e){}
-    try { m.getSource('conn-dots').setData(empty); } catch(e){}
-  }
-}
-
-function buildConnLine(theme, locId){
-  if(theme!=='E') return;
-  const m = maps['E']; if(!m) return;
-  if(!_isMapReady(m)){ m.once('load',()=>buildConnLine(theme,locId)); return; }
-  activeConns[theme] = { locId };
-  requestAnimationFrame(()=>{
-    _updateConnGeo(theme);
-    setTimeout(()=>{ if(activeConns[theme]?.locId===locId) _updateConnGeo(theme); }, 300);
-  });
-}
-
-const _connRaf = {};
-function liveUpdateConn(theme){
-  if(!activeConns[theme]) return;
-  if(_connRaf[theme]) return;
-  _connRaf[theme] = requestAnimationFrame(()=>{
-    _connRaf[theme] = null;
-    _updateConnGeo(theme);
-  });
-}
-
-/* ══════════════════════════════════════════════
    MOBİL TAB & SHEET
 ══════════════════════════════════════════════ */
 (function(){
@@ -740,7 +622,6 @@ window.debug.map = {
     }
     console.log('eActiveLoc:', eActiveLoc);
     console.log('seçili pinler:', [..._selPinIds]);
-    console.log('aktif bağlantı:', activeConns.E?.locId || null);
     console.log('film paneli açık:', document.getElementById('mp')?.classList.contains('open'));
     console.log('currentFilm:', currentFilm ? `F${currentFilm.id} "${currentFilm.title}"` : null);
     console.groupEnd();

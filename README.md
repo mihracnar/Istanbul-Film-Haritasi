@@ -1,4 +1,4 @@
-# İstanbul Film Mekanları Haritası
+# Sinemada İstanbul
 
 İBB Sinema Ofisi için geliştirilmiş interaktif bir web haritası. İstanbul'da çekilen filmlerin mekanlarını, dönemlerini ve türlerini keşfetmeyi sağlar.
 
@@ -32,7 +32,7 @@
 | `config.js` | Google Sheets URL'leri, GID sabitleri, `FILMS`/`LOCS` dizileri, `FILM_MAP`/`LOC_MAP` lookup dictionary'leri, `buildLookupMaps()` |
 | `data.js` | Google Sheets CSV parser, `loadSheetsData()`, mekan-film eşleştirme (`matchLocs`), Türkçe karakter normalizasyonu, `filmOrigTitleHTML()` |
 | `tmdb.js` | TMDB API entegrasyonu, `fetchTMDB()`, prebuilt cache yükleme (`tmdb-cache.json`), sessionStorage cache |
-| `map.js` | MapLibre harita, GeoJSON kaynak/layer yönetimi, bağlantı çizgileri, pin highlight sistemi, overlay-aware padding, media panel, galeri, lightbox, mobil tab sistemi, filtre state |
+| `map.js` | MapLibre harita, GeoJSON kaynak/layer yönetimi, pin highlight sistemi, overlay-aware padding, media panel, galeri, lightbox, mobil tab sistemi, filtre state |
 | `ui.js` | Mekan listesi render (alfabetik), film accordion render, filtre uygulama, `eSelectLoc()`, `_clearLocSelectionState()` |
 | `app.js` | Chip üretimi (mekan kategorisi, decade, tür), filtre setter fonksiyonları (`eSetGenre`, `eSetDecade`, `eSetYabanci`), kayan segment indicator, arama (search) mantığı, tema toggle |
 | `init.js` | `initApp()`, `attachMapRedraw()`, scroll/resize event listener'ları |
@@ -103,7 +103,7 @@ Her filtre değişikliğinde iki fonksiyon çağrılır:
 
 ### Mekan Seçimi ile Filtre Tutarlılığı
 
-Tür, decade, köken chip'lerinden biri ya da arama kutusundan bir yönetmen seçildiğinde, varsa aktif mekan seçimi (`eActiveLoc`, rozet, pin highlight, bağlantı çizgileri, galeri barı) otomatik temizlenir — `ui.js`'teki `_clearLocSelectionState()` ile. Bu, film panelinin "seçili mekan ∩ yeni filtre" gibi sessiz bir kesişim göstermesini engeller.
+Tür, decade, köken chip'lerinden biri ya da arama kutusundan bir yönetmen seçildiğinde, varsa aktif mekan seçimi (`eActiveLoc`, rozet, pin highlight, galeri barı) otomatik temizlenir — `ui.js`'teki `_clearLocSelectionState()` ile. Bu, film panelinin "seçili mekan ∩ yeni filtre" gibi sessiz bir kesişim göstermesini engeller.
 
 ### Sıfırlama Davranışı
 
@@ -153,8 +153,6 @@ Pinler ve label'lar Leaflet HTML marker yerine **MapLibre GL JS symbol layer'lar
 
 | Layer ID | Tür | Kaynak | Açıklama |
 |---|---|---|---|
-| `conn-lines-layer` | `line` | `conn-lines` | Bağlantı çizgileri (kırmızı, kesikli) |
-| `conn-dots-layer` | `circle` | `conn-dots` | Bağlantı bitiş noktaları (kırmızı) |
 | `locs-dots` | `circle` | `locs` | Pin noktaları — siyah, kayıp eserler gri/soluk |
 | `locs-labels` | `symbol` | `locs` | Siyah label box — seçili pinler gizlenir |
 | `locs-labels-sel` | `symbol` | `locs-sel` | Kırmızı label box — yalnızca seçili pinler |
@@ -182,28 +180,6 @@ Seçim durumu `_selPinIds` (Set) ile takip edilir. `_syncSelSource()` her deği�
 `ePinsResetAll()` → seti temizler → `_syncSelSource()` çağırır.
 
 **Film seçilince** `highlightFilmOnMap()` tüm mekan pinlerini vurgular ve haritayı o filmin mekanlarının sınırlarına `fitBounds` ile oturtur (`maxZoom: 13`, mekan sayısına göre dinamik `padding`, overlay-aware padding ile birleştirilmiş — bkz. Pin Görünürlük Garantisi).
-
----
-
-## Bağlantı Çizgileri (Connection Lines)
-
-Mekan seçilince harita canvas'ı üzerinde GeoJSON LineLayer kullanılarak eğrisel kesikli çizgiler çizilir.
-
-- Kaynak: mekan pin'inin harita üzerindeki ekran koordinatı (`m.project([lng, lat])`)
-- Hedef: film listesi satırlarının ekran koordinatı (`getBoundingClientRect()`)
-- Koordinatlar `m.unproject()` ile geo'ya dönüştürülür, harita hareket ettikçe `liveUpdateConn()` ile yenilenir
-- Bezier eğrisi cubic control point'lerle hesaplanır; yüksek dikey sapma (`0.35`) belirgin yay oluşturur
-- `conn-lines-layer`: `line-color: '#f03010'`, `line-dasharray: [5,4]`
-- RAF guard (`_connRaf`) aynı frame'de birden fazla çizim engelini sağlar
-
-### Timer Yönetimi
-
-`eSelectLoc()` iki aşamalı çizim başlatır:
-
-1. **300ms sonra** (accordion animasyonu ~250ms biter): `buildConnLine()` ilk çizim
-2. **moveend + 80ms**: flyTo bitince pin konumu yeniden hesaplanır
-
-`closeMedia()` ve `openMedia()`, `_connTimer` ve `_connMoveEnd` handler'larını iptal ederek stale çizim oluşmasını engeller.
 
 ---
 
@@ -243,7 +219,7 @@ Film seçilince sağdan kayan panel:
 4. Açıklama
 5. Çekim Mekanları chip'leri (`mp-loc-chip`)
 
-Media panel açılınca sağ film panel `visibility:hidden` yapılır. Kapanınca restore edilir ve tüm highlight/conn state temizlenir.
+Media panel açılınca sağ film panel `visibility:hidden` yapılır. Kapanınca restore edilir ve tüm highlight state temizlenir.
 
 ### Orijinal İsim Gösterimi
 
@@ -270,7 +246,7 @@ Mekan seçilince haritanın altından çıkan görsel şerit:
 - Logo: `logo.png` (sade) ↔ `logo_dark.png` (renkli)
 - Media panel: `#mp.renkli` class'ı ayrıca eklenir
 
-Sade modda harita canvas'ına `filter:grayscale` **uygulanmaz**; interaktif kırmızı elementler (pin label box, bağlantı çizgileri, nokta) her iki temada da renkli görünür. Harita görsel dili zaten düşük doygunluklu CARTO Positron tile'ına dayanır.
+Sade modda harita canvas'ına `filter:grayscale` **uygulanmaz**; interaktif kırmızı elementler (pin label box, nokta) her iki temada da renkli görünür. Harita görsel dili zaten düşük doygunluklu CARTO Positron tile'ına dayanır.
 
 ---
 
@@ -280,7 +256,6 @@ Sade modda harita canvas'ına `filter:grayscale` **uygulanmaz**; interaktif kır
 |---|---|
 | `FILM_MAP` / `LOC_MAP` (O(1) lookup) | Dizilerde tekrarlı `find()` çağrısı kaldırıldı |
 | `inited.E` flag | `m.loaded()` tile-yükleme false pozitiflerini engeller |
-| RAF guard — `liveUpdateConn` | Aynı frame'de birden fazla GeoJSON güncelleme engellendi |
 | MapLibre native collision | JS label collision detection kaldırıldı |
 | `buildLocGallerySkeleton` | Mekan galerisinin anında açılması |
 | GeoJSON source separation | `locs-sel` ayrı source — seçili pin render'ı normal flow'u bozmaz |
@@ -366,7 +341,6 @@ Sol panel chip yüksekliği, sağ panel genre chip yüksekliğiyle `eSyncFilterH
 - Film detayı kapatılınca her ikisi restore edilir
 
 ### Devre Dışı Bırakılan Özellikler (Mobil)
-- Bağlantı çizgileri (mobilde `liveUpdateConn` çağrılmaz)
 - `eFilterMapMarkers` flyTo
 - `highlightFilmOnMap` flyTo
 - `eSyncFilterHeights` JS sync

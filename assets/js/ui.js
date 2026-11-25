@@ -133,7 +133,7 @@ function eApplyFilters(){
   });
 }
 
-/* ── Mekan seçim durumunu temizle (rozet, pin, conn çizgileri, galeri) ── */
+/* ── Mekan seçim durumunu temizle (rozet, pin, galeri) ── */
 function _clearLocSelectionState(){
   if(!eActiveLoc) return;
   eActiveLoc = null;
@@ -141,7 +141,6 @@ function _clearLocSelectionState(){
   if(badge) badge.style.display = 'none';
   ePinsResetAll();
   clearSelLayers();
-  clearConnLines();
   document.querySelectorAll('#cE .e-loc-row').forEach(el=>el.classList.remove('on'));
   document.querySelectorAll('#cE .e-film-row').forEach(el=>el.classList.remove('on'));
   const bar = document.getElementById('eLocBar');
@@ -178,7 +177,6 @@ function eSelectLoc(id){
   // Media panel açıksa kapat
   clearHighlights();
   clearSelLayers();
-  clearConnLines();
   const mpEl = document.getElementById('mp');
   if(mpEl.classList.contains('open')){
     mpEl.classList.remove('open');
@@ -224,17 +222,5 @@ function eSelectLoc(id){
   // Haritaya uç — MapLibre flyTo ([lng, lat] sırası!)
   if(maps.E){
     maps.E.flyTo({ center:[loc.lng, loc.lat], zoom:15, duration:500, padding:_eMapOverlayPadding() });
-    if(window._connTimer) clearTimeout(window._connTimer);
-    if(window._connMoveEnd) { maps.E.off('moveend', window._connMoveEnd); window._connMoveEnd=null; }
-    const _targetLocId = loc.id;
-    window._connTimer = setTimeout(()=>{
-      window._connTimer = null;
-      if(eActiveLoc === _targetLocId) buildConnLine('E', _targetLocId);
-    }, 300);
-    window._connMoveEnd = () => {
-      window._connMoveEnd = null;
-      if(eActiveLoc === _targetLocId) setTimeout(()=>buildConnLine('E',_targetLocId), 80);
-    };
-    maps.E.once('moveend', window._connMoveEnd);
   }
 }

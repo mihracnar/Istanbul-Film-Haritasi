@@ -1,6 +1,6 @@
 // ============================================================
 // katki-modal.js  v3
-// İstanbul Film Mekanları Haritası — Katkı Formu
+// Sinemada İstanbul — Katkı Formu
 // 3 adım: Tür → Form → İletişim
 // config.js: SHEETS_BASE, GID_FILMLER/MEKANLAR/GORSELLER, KATKI_API_URL
 // ============================================================
