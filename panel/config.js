@@ -7,7 +7,7 @@ window.PANEL_CONFIG = {
   ADAPTER: 'sheets',
 
   // panel-api.gs dağıtımının /exec adresi (apps-script/panel-api.gs → Dağıt → Web uygulaması)
-  API_URL: 'https://script.google.com/macros/s/BURAYA_DAGITIM_KIMLIGI/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzdulhSv1aqxo9hQUDqbcDYj2xH4yKkBUZH482bRcmDA6ykp36lisMONGpixt2T5Vaa/exec',
 
   BASEMAP_STYLE: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   MAP_CENTER: [28.975, 41.015],
