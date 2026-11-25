@@ -1,0 +1,36 @@
+# main'e her push'ta yalnızca yayın dosyalarını `deploy` dalına aktarır.
+# Hostinger (hPanel → Gelişmiş → Git) bu dalı public_html'e çeker.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yayın dosyalarını topla
+        run: |
+          mkdir -p _site/data
+          cp -r index.html katki-modal.css katki-modal.js assets .htaccess _site/
+          cp data/tmdb-cache.json _site/data/
+
+      - name: deploy dalına aktar
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: deploy
+          enable_jekyll: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          full_commit_message: "deploy: ${{ github.sha }}"
