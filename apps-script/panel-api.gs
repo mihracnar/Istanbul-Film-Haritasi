@@ -72,16 +72,18 @@ function load_(editor) {
     var headers = sh.getRange(HEADER_ROW, 1, 1, lastCol).getDisplayValues()[0];
     var rows = [], rowNums = [], formulaCols = [];
     if (lastRow > HEADER_ROW) {
-      var vals = sh.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, lastCol).getDisplayValues();
-      vals.forEach(function (r, i) {
-        // tamamen boş satırları atla; satır numarasını koru (kimliksiz sayfalar satırla adreslenir)
-        if (r.join('').trim() === '') return;
-        rows.push(r);
-        rowNums.push(HEADER_ROW + 1 + i);
-      });
       // İlk veri satırındaki formüllü sütunlar salt-okunur sayılır.
       var f = sh.getRange(HEADER_ROW + 1, 1, 1, lastCol).getFormulas()[0];
       f.forEach(function (v, i) { if (v) formulaCols.push(i); });
+      var vals = sh.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, lastCol).getDisplayValues();
+      vals.forEach(function (r, i) {
+        // formül dışındaki hücreleri boş satırları atla (formülü aşağı uzatılmış satırlar);
+        // satır numarasını koru (kimliksiz sayfalar satırla adreslenir)
+        var dolu = r.some(function (v, c) { return formulaCols.indexOf(c) < 0 && String(v).trim() !== ''; });
+        if (!dolu) return;
+        rows.push(r);
+        rowNums.push(HEADER_ROW + 1 + i);
+      });
     }
     return { name: name, headers: headers, formulaCols: formulaCols, rows: rows, rowNums: rowNums };
   });
